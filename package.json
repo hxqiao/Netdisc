@@ -1,0 +1,19 @@
+{
+  "name": "netdisc",
+  "version": "1.0.0",
+  "description": "node.js/vue3项目",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hxqiao/Netdisc.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hxqiao/Netdisc/issues"
+  },
+  "homepage": "https://github.com/hxqiao/Netdisc#readme"
+}

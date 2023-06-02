@@ -1,51 +1,44 @@
-'use strict';
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const app = express();
+//设置跨域访问
+// app.all('*', function(req, res, next) {
+//     res.header("Access-Control-Allow-Origin", "*");
+//     res.header("Access-Control-Allow-Headers", "X-Requested-With");
+//     res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
+//     res.header("X-Powered-By", ' 3.2.1');
+//     res.header("Content-Type", "application/json;charset=utf-8");
+//     next();
+// });
 
-var
-    fs = require('fs'),
-    url = require('url'),
-    path = require('path'),
-    http = require('http');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(cors());
 
-// 从命令行参数获取root目录，默认是当前目录:
-console.log(process.argv);
-
-var root = path.resolve(process.argv[2] || '.');
-
-console.log(root);
-
-console.log('Static root dir: ' + root);
-
-// 创建服务器:
-var server = http.createServer(function (request, response) {
-    // 获得URL的path，类似 '/css/bootstrap.css':
-    var pathname = url.parse(request.url).pathname;
-    // 获得对应的本地文件路径，类似 '/srv/www/css/bootstrap.css':
-    var filepath = path.join(root, pathname);
-    // 获取文件状态:
-
-    console.log(filepath);
-
-    fs.stat(filepath, function (err, stats) {
-        console.log('--------------');
-        console.log(stats);
-        console.log('--------------');
-        if (!err && stats.isFile()) {
-            // 没有出错并且文件存在:
-            console.log('200 ' + request.url);
-            // 发送200响应:
-            response.writeHead(200);
-            // 将文件流导向response:
-            fs.createReadStream(filepath).pipe(response);
-        } else {
-            // 出错了或者文件不存在:
-            console.log('404 ' + request.url);
-            // 发送404响应:
-            response.writeHead(404);
-            response.end('404 Not Found');
-        }
-    });
+//写个接口login
+app.post('/login', function(req, res) {
+    console.log('post');
+    res.status(200),
+    res.send({
+        msg: '登录成功'
+    })
 });
 
-server.listen(8080);
+app.get('/logout', function(req, res) {
+    console.log('get');
+    res.status(200),
+    res.send({
+        msg: '登出成功'
+    })
+});
 
-console.log('Server is running at http://127.0.0.1:8080/');
+//配置服务端口
+var server = app.listen(8080, function() {
+
+    var host = server.address().address;
+
+    var port = server.address().port;
+
+    console.log('Example app listening at http://%s:%s', host, port);
+})

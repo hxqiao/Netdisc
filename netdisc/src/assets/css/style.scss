@@ -1,0 +1,12 @@
+.loginDialog {
+    border-radius: 16px;
+	.el-dialog__header {
+		padding: 0;
+        .el-dialog__headerbtn {
+            top: 0;
+        }
+	}
+    .el-dialog__body {
+        padding: 0;
+    }
+}

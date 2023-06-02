@@ -1,0 +1,40 @@
+.publicdialog {
+
+}
+
+.el-message-box {
+    padding-bottom: 0;
+
+    &__header {
+        padding: 0 20px;
+        height: 32px;
+        line-height: 32px;
+        // border-bottom: 1px solid $bcolor-dialog;
+    }
+
+    &__title {
+        font-size: 14px;
+        line-height: 32px;
+    }
+
+    &__headerbtn {
+        top: 17px;
+        right: 20px;
+
+        .el-message-box__close {
+            // color: $--color-text-secondary;
+
+            &:hover, &:active {
+                // color: $--color-primary;
+            }
+        }
+    }
+
+    &__content {
+        padding: 20px;
+    }
+
+    &__btns {
+        padding: 10px 20px;
+    }
+}

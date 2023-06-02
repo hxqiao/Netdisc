@@ -1,14 +1,13 @@
-<script setup lang="ts">
-import Login from './views/login/index.vue'
-// import TheWelcome from './components/TheWelcome.vue'
-</script>
-
 <template>
-  <Login></Login>
+  <router-view></router-view>
 </template>
 
-<style>
+<script setup lang="ts">
+</script>
+
+<style lang="scss">
 body {
     margin: 0;
+    height: 100%;
 }
 </style>

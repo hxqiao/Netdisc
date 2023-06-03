@@ -1,0 +1,58 @@
+{
+  "id": "4102861",
+  "name": "netdisc",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "3381673",
+      "name": "zip",
+      "font_class": "zip",
+      "unicode": "e772",
+      "unicode_decimal": 59250
+    },
+    {
+      "icon_id": "19649327",
+      "name": "txt",
+      "font_class": "txt",
+      "unicode": "e644",
+      "unicode_decimal": 58948
+    },
+    {
+      "icon_id": "20403210",
+      "name": "exe",
+      "font_class": "exe",
+      "unicode": "e6da",
+      "unicode_decimal": 59098
+    },
+    {
+      "icon_id": "20744568",
+      "name": "云文件未识别",
+      "font_class": "yunwenjianweishibie",
+      "unicode": "e61e",
+      "unicode_decimal": 58910
+    },
+    {
+      "icon_id": "23016923",
+      "name": "PDF",
+      "font_class": "pdf",
+      "unicode": "e602",
+      "unicode_decimal": 58882
+    },
+    {
+      "icon_id": "27454009",
+      "name": "mp3",
+      "font_class": "mp3",
+      "unicode": "e607",
+      "unicode_decimal": 58887
+    },
+    {
+      "icon_id": "19652424",
+      "name": "文件夹",
+      "font_class": "wenjianjia",
+      "unicode": "e64d",
+      "unicode_decimal": 58957
+    }
+  ]
+}

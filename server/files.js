@@ -1,18 +1,20 @@
 const fs = require('fs');
 const multer = require('multer');
 const moment = require('moment')
+const path = require('path')
 
 module.exports = function (app) {
 
   // 获取文件列表
   app.get('/getFilesList', function (req, res) {
+    console.log(req.query.dir);
 
     let components = []
-    const files = fs.readdirSync('./uploads/')
+    const files = fs.readdirSync(`./uploads${req.query.dir}`)
     files.forEach(function (item, index) {
 
       // fs.statSync()方法用于异步返回有关给定文件路径的信息。
-      let stat = fs.statSync("./uploads/" + item)
+      let stat = fs.statSync(`./uploads${ req.query.dir + item }`)
       const ctime = moment(stat.ctime).format('YYYY-MM-DD HH:mm:ss')
       if (stat.isDirectory() === false) { // 判断当前文件是否一个目录
         const p = item.split('.')
@@ -21,19 +23,21 @@ module.exports = function (app) {
           name: item.slice(14),
           size: stat.size + 'B',
           date: ctime,
-          url: 'http://' + req.headers.host + '/uploads/' + item,
-          type
+          url: 'http://' + req.headers.host + `/uploads${ req.query.dir + item }`,
+          type,
+          dir: '/'
         })
       } else {
-        console.log();
         components.push({
           name: item,
           size: '-',
           date: ctime,
           url: '-',
-          type: 'folder'
+          type: 'folder',
+          dir: '/'
         })
       }
+
     })
 
     const list = components
@@ -49,7 +53,7 @@ module.exports = function (app) {
   const upload = multer({
     storage: multer.diskStorage({
       destination: function (req, file, cb) {
-        cb(null, './uploads/');
+        cb(null, `./uploads${req.query.dir}`);
       },
       filename: function (req, file, cb) {
         //file.originalname上传文件的原始文件名

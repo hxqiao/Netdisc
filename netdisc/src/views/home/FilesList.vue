@@ -16,10 +16,6 @@
               </el-button>
             </template>
           </el-upload>
-          
-          <!-- <div class="single">
-            <input type="file" name="singleFile" id="singleFile" @change="singleFiles">
-          </div> -->
         </div>
         <div class="pan__header-tool-bar--customize">
 
@@ -38,7 +34,7 @@
               <Svgicon v-else-if="scope.row.type==='mp3'" icon="icon-mp3" style="font-size: 30px;" />
               <Svgicon v-else-if="scope.row.type==='zip'" icon="icon-zip" style="font-size: 30px;" />
               <Svgicon v-else-if="scope.row.type==='pdf'" icon="icon-pdf" style="font-size: 30px;" />
-              <div v-else-if="scope.row.type==='folder'" class="folder" @click="inFolder">
+              <div v-else-if="scope.row.type==='folder'" class="folder" @click="inFolder(scope.row)">
                 <Svgicon icon="icon-wenjianjia" style="font-size: 30px;" />
               </div>
               <Svgicon v-else icon="icon-yunwenjianweishibie" style="font-size: 30px;" />
@@ -78,12 +74,15 @@
 import { onMounted, ref } from 'vue';
 import type { UploadFile, UploadFiles } from 'element-plus'
 import { getFilesListApi, uploadFilesApi } from '@/api/home.js';
-import Svgicon from '@/components/icons/Svgicon.vue'
 
-interface FilesList {
+// 文件详情
+interface FilesDetail {
   date: string
   name: string
   size: string
+  dir: string
+  type: string
+  url: string
 }
 
 function uploadFiles(uploadFile: UploadFile, uploadFiles: UploadFiles): void {
@@ -95,14 +94,20 @@ function uploadFiles(uploadFile: UploadFile, uploadFiles: UploadFiles): void {
   })
 }
 
-function inFolder() {
+function inFolder(detail: FilesDetail) {
+  console.log('?????');
   
+  getFilesListApi({
+    dir: detail.dir + detail.name + '/'
+  })
 }
 
 const tableData = ref([])
 
 function init() {
-  getFilesListApi().then(res => {
+  getFilesListApi({
+    dir: '/'
+  }).then(res => {
     tableData.value = res.list
   })
 }
@@ -110,6 +115,18 @@ function init() {
 onMounted(() => {
   init()
 })
+
+
+function getArr<T>(cont:T, len:number): T[] {
+    // const arr:T[]=[] //这是一个泛型数组 或者这样写
+    const arr: Array<T> = []; //泛型必须要有一个初始值
+    for (let i = 0; i < len;i++) {
+      arr.push(cont)
+    }
+    return arr
+}
+const arr1 = getArr<number>(11.1, 3);
+console.log(arr1)
 </script>
 
 <style lang="scss" scoped>

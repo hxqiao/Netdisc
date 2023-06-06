@@ -4,11 +4,12 @@
       <div class="pan__header-tool-bar">
         <div class="pan__header-tool-bar--action">
           <el-upload
-            ref="upload"
+            ref="uploadRef"
             class="upload-demo"
             :limit="1"
             :auto-upload="false"
-            :on-change="uploadFiles"
+            :show-file-list="false"
+            :on-change="submitUploadLargeFiles"
           >
             <template #trigger>
               <el-button type="primary" round style="width: 100px;">
@@ -24,6 +25,18 @@
     </div>
     <div class="pan__body">
       <div class="pan__body-contain">
+        <div class="pan__body-contain--nav">
+          <div class="nav__breadcrumb">
+            <el-breadcrumb separator=">">
+              <el-breadcrumb-item v-if="currentPath.length !== 0" class="nav__pre" separator="|">
+                <span style="color: #06a7ff;cursor: pointer;">返回上一级</span>
+              </el-breadcrumb-item>
+              <el-breadcrumb-item v-for="(item, index) in currentPath" @click="jumpDir(item, index, currentPath)">
+                {{ item === '' && index === 0 ? '全部文件' : item }}
+              </el-breadcrumb-item>
+            </el-breadcrumb>
+          </div>
+        </div>
         <el-table :data="tableData" style="width: 100%">
           <el-table-column type="selection" width="55" />
           <el-table-column width="55">
@@ -40,21 +53,30 @@
               <Svgicon v-else icon="icon-yunwenjianweishibie" style="font-size: 30px;" />
             </template>
           </el-table-column>
-          <el-table-column prop="name" label="文件名" width="500">
+          <el-table-column prop="name" label="文件名" min-width="500">
             <template #default="scope">
-              <div class="name">
-                {{ scope.row.name }}
+              <div class="files" @click="inFolder(scope.row)">
+                <span class="files-name">
+                  {{ scope.row.name }}
+                </span>
+                <div class="files-action__icon">
+                  <Svgicon icon="icon-download" />
+                  <Svgicon icon="icon-copy" />
+                  <Svgicon icon="icon-move" />
+                  <Svgicon icon="icon-zhongmingming" />
+                  <Svgicon icon="icon-ashbin" @click="delectfile(scope.row.originalname)" />
+                </div>
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="date" label="修改时间">
+          <el-table-column prop="date" label="修改时间" width="200">
             <template #default="scope">
               <div class="date">
                 {{ scope.row.date }}
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="size" align="right" label="大小">
+          <el-table-column prop="size" align="right" label="大小" width="200">
             <template #default="scope">
               <div class="size">
                 {{ scope.row.size }}
@@ -71,12 +93,18 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
-import type { UploadFile, UploadFiles } from 'element-plus'
-import { getFilesListApi, uploadFilesApi } from '@/api/home.js';
+import { onMounted, ref, computed } from 'vue';
+import type { UploadInstance, UploadFile, UploadFiles } from 'element-plus'
+import { getFilesListApi, uploadFilesApi, delectFileApi, fileUploadApi, fileMergeApi } from '@/api/home.js';
+import { useRouter, useRoute } from 'vue-router';
+import { hashFile, blobSlice } from './hook'
+
+const router = useRouter()
+const route = useRoute()
 
 // 文件详情
 interface FilesDetail {
+  originalname: string
   date: string
   name: string
   size: string
@@ -85,35 +113,122 @@ interface FilesDetail {
   url: string
 }
 
-function uploadFiles(uploadFile: UploadFile, uploadFiles: UploadFiles): void {
+const uploadRef = ref<UploadInstance>()
+// 上传文件
+async function submitUploadFiles(uploadFile: UploadFile, uploadFiles: UploadFiles) {
   console.log(uploadFile);
   const formData = new FormData();
+  formData.append('dir', currentFolder.value)
   formData.append('singleFile', uploadFile.raw);
-  uploadFilesApi(formData).then(() => {
-    init()
-  })
+  await uploadFilesApi(formData)
+  uploadRef.value!.clearFiles()
+  initPage()
 }
 
-function inFolder(detail: FilesDetail) {
-  console.log('?????');
-  
-  getFilesListApi({
-    dir: detail.dir + detail.name + '/'
+async function submitUploadLargeFiles(uploadFile: UploadFile, uploadFiles: UploadFiles) {
+  const file = uploadFile.raw
+  let currentChunk = 0;
+  const chunkSize = 100 * 1024 * 1024; // 每个chunk的大小，设置为2兆
+  const blockCount = Math.ceil(file.size / chunkSize); // 分片总数
+  const axiosPromiseArray = []; // axiosPromise数组
+  const hash = await hashFile(file, chunkSize); //文件 hash 
+  for (let i = 0; i < blockCount; i++) {
+    const start = i * chunkSize;
+    const end = Math.min(file.size, start + chunkSize);
+    // 构建表单
+    const form = new FormData();
+    form.append('file', blobSlice.call(file, start, end));
+    form.append('name', file.name);
+    form.append('total', String(blockCount));
+    form.append('index', String(i));
+    form.append('size', String(file.size));
+    form.append('hash', hash);
+    // ajax提交 分片，此时 content-type 为 multipart/form-data
+    const axiosOptions = {
+      onUploadProgress: e => {
+        // 处理上传的进度
+        console.log(blockCount, i, e, file);
+      },
+    };
+    // 加入到 Promise 数组中
+    axiosPromiseArray.push(fileUploadApi(form).then(axiosOptions));
+  }
+  console.log(axiosPromiseArray);
+  await Promise.all(axiosPromiseArray).then(() => {
+    // 合并chunks
+    const data = {
+      size: file.size,
+      name: file.name,
+      total: blockCount,
+      hash
+    };
+    fileMergeApi(data).then(res => {
+      console.log('上传成功');
+      console.log(res.data, file);
+      alert('上传成功');
+    }).catch(err => {
+      console.log(err);
+    });
   })
+  uploadRef.value!.clearFiles()
+  initPage()
+}
+
+
+
+const currentFolder = ref<string>('/')
+const currentPath = computed(() => {
+  return currentFolder.value.split('/')
+})
+
+// 点击进入文件夹
+async function inFolder(detail: FilesDetail) {
+  if (detail.type !== 'folder') return
+  currentFolder.value = currentFolder.value.slice(0, currentFolder.value.length - 1) + detail.dir + detail.name + '/'
+  router.push({
+    path: route.path,
+    query: {
+      category: route.query.category,
+      path: currentFolder.value
+    }
+  })
+  initPage()
+}
+
+// 面包屑快速跳转
+function jumpDir(itemDir: string, index: number, fullDir: string[]) {
+  currentFolder.value = index === 0 ? '/' : fullDir.slice(0, index + 1).join('/') + '/'
+  router.push({
+    path: route.path,
+    query: {
+      category: route.query.category,
+      path: currentFolder.value
+    }
+  })
+  initPage()
+}
+
+// 删除文件
+async function delectfile(name: string) {
+  await delectFileApi({
+    name,
+    dir: currentFolder.value
+  })
+  initPage()
 }
 
 const tableData = ref([])
-
-function init() {
-  getFilesListApi({
-    dir: '/'
-  }).then(res => {
-    tableData.value = res.list
+// 初始化页面
+async function initPage() {
+  const { list } = await getFilesListApi({
+    dir: currentFolder.value
   })
+  tableData.value = list
 }
 
 onMounted(() => {
-  init()
+  currentFolder.value = route.query.path as string || '/'
+  initPage()
 })
 
 
@@ -154,11 +269,50 @@ console.log(arr1)
       width: 80%;
       height: 100%;
       padding: 0 20px;
-      .name {
+      .pan__body-contain--nav {
+        font-size: 12px;
+        height: 40px;
+        line-height: 40px;
+        .nav__pre {
+          display: inline-block;
+          margin-right: 5px;
+        }
+        .nav__breadcrumb {
+          vertical-align: middle;
+          display: inline-flex;
+          align-items: center;
+          overflow: hidden;
+          ::v-deep(.el-breadcrumb__item) {
+            font-size: 12px;
+          }
+          ::v-deep(.el-breadcrumb__inner) {
+            color: #06a7ff;
+            cursor: pointer;
+          }
+        }
+      }
+      .files {
         font-size: 12px;
         cursor: pointer;
-        &:hover {
-          color: #06a7ff;
+        .files-name {
+          &:hover {
+            color: #06a7ff;
+          }
+        }
+        .files-action__icon {
+          position: absolute;
+          right: 0;
+          top: 0;
+          bottom: 0;
+          width: 200px;
+          display: flex;
+          align-items: center;
+          .svgicon {
+            height: 100%;
+            font-size: 16px;
+            margin: 5px;
+            color: #06a7ff;
+          }
         }
       }
       .date {

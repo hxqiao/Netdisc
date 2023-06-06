@@ -2,13 +2,12 @@ const fs = require('fs');
 const multer = require('multer');
 const moment = require('moment')
 const path = require('path')
+const { mkdirsSync } = require('./utils/dir');
 
 module.exports = function (app) {
 
   // 获取文件列表
   app.get('/getFilesList', function (req, res) {
-    console.log(req.query.dir);
-
     let components = []
     const files = fs.readdirSync(`./uploads${req.query.dir}`)
     files.forEach(function (item, index) {
@@ -20,6 +19,7 @@ module.exports = function (app) {
         const p = item.split('.')
         const type = p[p.length - 1]
         components.push({
+          originalname: item,
           name: item.slice(14),
           size: stat.size + 'B',
           date: ctime,
@@ -29,6 +29,7 @@ module.exports = function (app) {
         })
       } else {
         components.push({
+          originalname: item,
           name: item,
           size: '-',
           date: ctime,
@@ -53,7 +54,7 @@ module.exports = function (app) {
   const upload = multer({
     storage: multer.diskStorage({
       destination: function (req, file, cb) {
-        cb(null, `./uploads${req.query.dir}`);
+        cb(null, `./uploads${req.body.dir}`);
       },
       filename: function (req, file, cb) {
         //file.originalname上传文件的原始文件名
@@ -77,4 +78,102 @@ module.exports = function (app) {
       originalname
     })
   })
+
+  // 删除文件
+  app.post('/delectFile', (req, res) => {
+    const { dir, name } = req.body
+    const path = './uploads' + dir + name
+    if (fs.existsSync(path)) {
+      fs.unlinkSync(path);
+      res.json({
+        code: '0',
+        msg: '删除成功',
+      })
+    } else {
+      res.json({
+        code: '0',
+        msg: '删除失败，请稍后再试',
+      })
+    }
+  })
+
+  // 重命名文件
+  app.post('/renameFile', (req, res) => {
+    const { dir, name } = req.body
+    const path = './uploads' + dir + name
+    fs.rename(path, newPath, (err) => {
+
+    })
+    res.json({
+      code: '0',
+      type: 'single',
+    })
+  })
+
+  /**
+   * single(fieldname)
+   * Accept a single file with the name fieldname. The single file will be stored in req.file.
+   */
+  const uploadPath = path.join(__dirname, 'uploads');
+  const uploadTempPath = path.join(uploadPath, 'temp');
+  const upload1 = multer({ dest: uploadTempPath });
+  app.post('/file/upload', upload1.single('file'), (req, res) => {
+    console.log('file upload...')
+    // 根据文件hash创建文件夹，把默认上传的文件移动当前hash文件夹下。方便后续文件合并。
+    const {
+      name,
+      total,
+      index,
+      size,
+      hash
+    } = req.body;
+
+    const chunksPath = path.join(uploadPath, hash, '/');
+
+    if (!fs.existsSync(chunksPath)) mkdirsSync(chunksPath);
+
+    fs.renameSync(req.file.path, chunksPath + hash + '-' + index);
+    
+    res.json({
+      code: '0',
+      msg: '上传成功'
+    })
+  })
+
+  app.post('/file/merge_chunks', (req, res) => {
+    const {    
+      size, 
+      name, 
+      total, 
+      hash
+    } = req.body;
+    // 根据hash值，获取分片文件。
+    // 创建存储文件
+    // 合并
+    const chunksPath = path.join(uploadPath, hash, '/');
+    const filePath = path.join(uploadPath, name);
+    // 读取所有的chunks 文件名存放在数组中
+    const chunks = fs.readdirSync(chunksPath);
+    // 创建存储文件
+    fs.writeFileSync(filePath, ''); 
+    if(chunks.length !== total || chunks.length === 0) {
+      res.json({
+        code: '0',
+        msg: '切片文件数量不符合'
+      })
+      return;
+    }
+    for (let i = 0; i < total; i++) {
+      // 追加写入到文件中
+      fs.appendFileSync(filePath, fs.readFileSync(chunksPath + hash + '-' +i));
+      // 删除本次使用的chunk    
+      fs.unlinkSync(chunksPath + hash + '-' +i);
+    }
+    fs.rmdirSync(chunksPath);
+    // 文件合并成功，可以把文件信息进行入库。
+    res.json({
+      code: '0',
+      msg: '合并成功'
+    })
+  })                         
 } 

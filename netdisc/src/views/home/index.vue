@@ -41,7 +41,6 @@
 import { ref } from "vue";
 import MyFiles from './MyFiles.vue'
 import FilesList from './FilesList.vue'
-// import MyFiles from '../../components/icons/MyFiles.vue'
 
 const navList = ref([
 	{

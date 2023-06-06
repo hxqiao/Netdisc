@@ -12,6 +12,9 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
+
 
 interface Tree {
   label: string
@@ -49,6 +52,30 @@ const defaultProps = {
   children: 'children',
   label: 'label',
 }
+
+// 当前分类
+type filesCategory = 'all' | 'image' | 'document' | 'video' | 'audio'
+let currentCategory: filesCategory = 'all'
+
+const router = useRouter()
+const route = useRoute()
+onMounted(() => {
+  if (route.query.path) {
+    router.push({
+      path: route.path,
+      query: {
+        category: currentCategory,
+        path: route.query.path
+      }
+    })
+  } else
+  router.push({
+    path: route.path,
+    query: {
+      category: currentCategory
+    }
+  })
+})
 </script>
 
 <style lang="scss" scoped>

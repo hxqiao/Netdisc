@@ -17,6 +17,16 @@
               </el-button>
             </template>
           </el-upload>
+
+          
+          <el-button 
+            :type="uploading?'primary':'info'" 
+            round 
+            style="width: 100px;"
+            @click="pauseUpload()"
+          >
+            暂停
+          </el-button>
         </div>
         <div class="pan__header-tool-bar--customize">
 
@@ -37,7 +47,7 @@
             </el-breadcrumb>
           </div>
         </div>
-        <el-table :data="tableData" style="width: 100%">
+        <el-table :data="tableData" style="width: 100%;height: 100%;">
           <el-table-column type="selection" width="55" />
           <el-table-column width="55">
             <template #default="scope"> 
@@ -97,7 +107,7 @@ import { onMounted, ref, computed } from 'vue';
 import type { UploadInstance, UploadFile, UploadFiles } from 'element-plus'
 import { getFilesListApi, uploadFilesApi, delectFileApi, fileUploadApi, fileMergeApi } from '@/api/home.js';
 import { useRouter, useRoute } from 'vue-router';
-import { hashFile, blobSlice } from './hook'
+import { getFileHash, blobSlice } from './hook'
 
 const router = useRouter()
 const route = useRoute()
@@ -115,7 +125,7 @@ interface FilesDetail {
 
 const uploadRef = ref<UploadInstance>()
 // 上传文件
-async function submitUploadFiles(uploadFile: UploadFile, uploadFiles: UploadFiles) {
+async function submitUploadFiles(uploadFile: UploadFile) {
   console.log(uploadFile);
   const formData = new FormData();
   formData.append('dir', currentFolder.value)
@@ -125,56 +135,61 @@ async function submitUploadFiles(uploadFile: UploadFile, uploadFiles: UploadFile
   initPage()
 }
 
-async function submitUploadLargeFiles(uploadFile: UploadFile, uploadFiles: UploadFiles) {
+const emit = defineEmits(['getProgress'])
+
+const uploading = ref<boolean>(true)
+let tempFile: UploadFile
+async function submitUploadLargeFiles(uploadFile: UploadFile) {
+  tempFile = uploadFile
   const file = uploadFile.raw
-  let currentChunk = 0;
-  const chunkSize = 100 * 1024 * 1024; // 每个chunk的大小，设置为2兆
-  const blockCount = Math.ceil(file.size / chunkSize); // 分片总数
-  const axiosPromiseArray = []; // axiosPromise数组
-  const hash = await hashFile(file, chunkSize); //文件 hash 
-  for (let i = 0; i < blockCount; i++) {
-    const start = i * chunkSize;
-    const end = Math.min(file.size, start + chunkSize);
-    // 构建表单
-    const form = new FormData();
-    form.append('file', blobSlice.call(file, start, end));
-    form.append('name', file.name);
-    form.append('total', String(blockCount));
-    form.append('index', String(i));
-    form.append('size', String(file.size));
-    form.append('hash', hash);
-    // ajax提交 分片，此时 content-type 为 multipart/form-data
-    const axiosOptions = {
-      onUploadProgress: e => {
-        // 处理上传的进度
-        console.log(blockCount, i, e, file);
-      },
-    };
-    // 加入到 Promise 数组中
-    axiosPromiseArray.push(fileUploadApi(form).then(axiosOptions));
+  const { size, name, type } = file;
+  const chunkSize = 10 * 1024 * 1024; // 每个chunk的大小，设置为10兆
+  const hash = await getFileHash(file); //文件 hash 
+  let chunkindex = 0
+  let uploaded = 0;
+  const local = localStorage.getItem(hash);
+  if (local) {
+    uploaded = Number(local);
   }
-  console.log(axiosPromiseArray);
-  await Promise.all(axiosPromiseArray).then(() => {
-    // 合并chunks
-    const data = {
-      size: file.size,
-      name: file.name,
-      total: blockCount,
-      hash
-    };
-    fileMergeApi(data).then(res => {
-      console.log('上传成功');
-      console.log(res.data, file);
-      alert('上传成功');
-    }).catch(err => {
-      console.log(err);
-    });
-  })
+  console.log('开始分割');
+  
+  while (uploaded < size && uploading.value) {
+    const chunk = file.slice(uploaded, uploaded + chunkSize, type);
+    const formData = new FormData();
+    formData.append('dir', '/');
+    formData.append('name', name);
+    formData.append('type', type);
+    formData.append('size', String(size));
+    formData.append('file', chunk);
+    formData.append('hash', hash);
+    formData.append('offset', String(uploaded));
+    try {
+      await fileUploadApi(formData)
+      chunkindex += 1
+      console.log(`第${chunkindex}片段擅闯完成`);
+    } catch (e) {
+      // output.innerText = '上传失败。' + e.message;
+      return;
+    }
+    uploaded += chunk.size;
+    localStorage.setItem(hash, String(uploaded));
+    emit('getProgress', parseInt(`${uploaded / size * 100}`));
+    if (!uploading.value) {
+      return
+    }
+  }
+  localStorage.removeItem(hash);
   uploadRef.value!.clearFiles()
   initPage()
 }
 
-
+function pauseUpload() {
+  uploading.value = !uploading.value
+  if (uploading.value) {
+    // console.log(uploadRef.value);
+    submitUploadLargeFiles(tempFile)
+  }
+}
 
 const currentFolder = ref<string>('/')
 const currentPath = computed(() => {

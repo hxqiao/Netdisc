@@ -2,10 +2,12 @@ const fs = require('fs');
 const multer = require('multer');
 const moment = require('moment')
 const path = require('path')
+const uploader = require('express-fileupload');
 const { mkdirsSync } = require('./utils/dir');
 
 module.exports = function (app) {
 
+  app.use(uploader());
   // 获取文件列表
   app.get('/getFilesList', function (req, res) {
     let components = []
@@ -20,7 +22,7 @@ module.exports = function (app) {
         const type = p[p.length - 1]
         components.push({
           originalname: item,
-          name: item.slice(14),
+          name: item,
           size: stat.size + 'B',
           date: ctime,
           url: 'http://' + req.headers.host + `/uploads${ req.query.dir + item }`,
@@ -56,7 +58,7 @@ module.exports = function (app) {
       destination: function (req, file, cb) {
         cb(null, `./uploads${req.body.dir}`);
       },
-      filename: function (req, file, cb) {
+      hashname: function (req, file, cb) {
         //file.originalname上传文件的原始文件名
         var changedName = (new Date().getTime()) + '-' + Buffer.from(file.originalname, "latin1").toString(
           "utf8"
@@ -114,31 +116,75 @@ module.exports = function (app) {
    * single(fieldname)
    * Accept a single file with the name fieldname. The single file will be stored in req.file.
    */
-  const uploadPath = path.join(__dirname, 'uploads');
-  const uploadTempPath = path.join(uploadPath, 'temp');
-  const upload1 = multer({ dest: uploadTempPath });
-  app.post('/file/upload', upload1.single('file'), (req, res) => {
-    console.log('file upload...')
-    // 根据文件hash创建文件夹，把默认上传的文件移动当前hash文件夹下。方便后续文件合并。
-    const {
-      name,
-      total,
-      index,
-      size,
-      hash
-    } = req.body;
+  // const uploadPath = path.join(__dirname, 'uploads');
+  // const uploadTempPath = path.join(uploadPath, 'temp');
+  // const upload1 = multer({ dest: uploadTempPath });
+  // app.post('/file/upload', upload1.single('file'), (req, res) => {
+  //   console.log('file upload...')
+  //   // 根据文件hash创建文件夹，把默认上传的文件移动当前hash文件夹下。方便后续文件合并。
+  //   const {
+  //     name,
+  //     total,
+  //     index,
+  //     size,
+  //     hash
+  //   } = req.body;
 
-    const chunksPath = path.join(uploadPath, hash, '/');
+  //   const chunksPath = path.join(uploadPath, hash, '/');
 
-    if (!fs.existsSync(chunksPath)) mkdirsSync(chunksPath);
+  //   if (!fs.existsSync(chunksPath)) mkdirsSync(chunksPath);
 
-    fs.renameSync(req.file.path, chunksPath + hash + '-' + index);
+  //   fs.renameSync(req.file.path, chunksPath + hash + '-' + index);
     
-    res.json({
-      code: '0',
-      msg: '上传成功'
-    })
-  })
+  //   res.json({
+  //     code: '0',
+  //     msg: '上传成功'
+  //   })
+  // })
+  const {
+    promises: {
+      writeFile,
+      appendFile,
+    },
+    existsSync,
+  } = fs;
+  const { extname, resolve } = path;
+  app.post('/file/upload', async (req, res) => {
+    const { name, size, type, offset, hash } = req.body;
+    const { file } = req.files;
+
+    const ext = extname(name)
+    const hashname = resolve(__dirname, `./uploads/${hash}${ext}`);
+    const filename = resolve(__dirname, `./uploads/${name}`);
+    console.log(offset);
+    if (!existsSync(filename)) {
+      if (offset > 0) {
+        console.log('------------1');
+        if (!existsSync(hashname)) {
+          res.status(400)
+            .send({
+              message: '文件不存在',
+            });
+          return;
+        }
+        await appendFile(hashname, file.data);
+        res.send({
+          data: 'appended',
+        });
+        return;
+      }
+    
+      console.log('------------2');
+      await writeFile(hashname, file.data);
+      res.send({
+        data: 'created',
+      });
+    } else {
+      res.send({
+        data: 'existed',
+      });
+    }
+  });
 
   app.post('/file/merge_chunks', (req, res) => {
     const {    

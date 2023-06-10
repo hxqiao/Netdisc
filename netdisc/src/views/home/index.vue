@@ -7,11 +7,20 @@
 						<div class="bd-left-header">
 							<img src="../../assets/wp-logo.png" alt="" />
 						</div>
-						<div class="bd-right-header">
+						<div ref="buttonRef" class="bd-right-header" @click="onClickOutside()">
+							<Svgicon icon="icon-download" />
 						</div>
 					</div>
 				</div>
 			</header>
+			<el-popover
+				ref="popoverRef"
+				:virtual-ref="buttonRef"
+				trigger="click"
+				virtual-triggering
+			>
+				<el-progress :percentage="uploadPercentage" />
+			</el-popover>
 			<div class="main-layout__wrapper">
 				<div class="aside-wp-block">
 					<div class="aside-nav__main">
@@ -30,7 +39,7 @@
 					<MyFiles />
 				</div>
 				<div class="main-layout__body">
-					<FilesList />
+					<FilesList @get-progress="getProgress" />
 				</div>
 			</div>
 		</div>
@@ -38,7 +47,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, unref } from 'vue'
+import { ClickOutside as vClickOutside } from 'element-plus'
 import MyFiles from './MyFiles.vue'
 import FilesList from './FilesList.vue'
 
@@ -60,6 +70,19 @@ const navList = ref([
 		icon: ''
 	}, 
 ])
+
+const buttonRef = ref()
+const popoverRef = ref()
+const onClickOutside = () => {
+  unref(popoverRef).popperRef?.delayHide?.()
+}
+
+const uploadPercentage = ref<number>(0)
+function getProgress(percentage: number) {
+	console.log('upload');
+	buttonRef.value.click()
+	uploadPercentage.value = percentage
+}
 </script>
 
 <style lang="scss" scoped>
@@ -92,6 +115,8 @@ const navList = ref([
 					}
 					.bd-right-header {
 						display: flex;
+						align-items: center;
+						cursor: pointer;
 						a {
 							text-decoration: none;
 							padding: 0 10px;

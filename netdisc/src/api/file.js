@@ -2,7 +2,7 @@ import myAxios from '@/api/api.js'
 
 export function getFilesListApi(params) {
   return myAxios({
-    url: '/getFilesList',
+    url: '/file/list',
     method: 'get',
     params
   }, {
@@ -10,21 +10,9 @@ export function getFilesListApi(params) {
   })
 }
 
-export function uploadFilesApi(data) {
-  return myAxios({
-    url: '/uploadFiles',
-    method: 'post',
-    processData: false,
-    contentType: false,
-    data
-  }, {
-    loading: false
-  })
-}
-
 export function delectFileApi(data) {
   return myAxios({
-    url: '/delectFile',
+    url: '/file/delect',
     method: 'post',
     processData: false,
     contentType: false,
@@ -46,9 +34,21 @@ export function fileUploadApi(data) {
   })
 }
 
-export function fileMergeApi(data) {
+export function fileFinishApi(data) {
   return myAxios({
-    url: '/file/merge_chunks',
+    url: '/file/finish',
+    method: 'post',
+    processData: false,
+    contentType: false,
+    data
+  }, {
+    loading: false
+  })
+}
+
+export function fileRenameApi(data) {
+  return myAxios({
+    url: '/file/rename',
     method: 'post',
     processData: false,
     contentType: false,

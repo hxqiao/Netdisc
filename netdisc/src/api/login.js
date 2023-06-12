@@ -10,9 +10,19 @@ export function logout(params) {
   })
 }
 
-export function login(data) {
+export function loginApi(data) {
   return myAxios({
     url: '/login',
+    method: 'post',
+    data
+  }, {
+    loading: false
+  })
+}
+
+export function registerApi(data) {
+  return myAxios({
+    url: '/register',
     method: 'post',
     data
   }, {

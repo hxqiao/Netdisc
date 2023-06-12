@@ -27,6 +27,10 @@
           >
             暂停
           </el-button>
+
+          <el-button type="primary" plain @click="submitUploadFiles()">
+            MD5
+          </el-button>
         </div>
         <div class="pan__header-tool-bar--customize">
 
@@ -65,8 +69,8 @@
           </el-table-column>
           <el-table-column prop="name" label="文件名" min-width="500">
             <template #default="scope">
-              <div class="files" @click="inFolder(scope.row)">
-                <span class="files-name">
+              <div class="files" @click="getDetails(scope.row)">
+                <span class="files-name" @click="inFolder(scope.row)">
                   {{ scope.row.name }}
                 </span>
                 <div class="files-action__icon">
@@ -79,14 +83,14 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="date" label="修改时间" width="200">
+          <el-table-column prop="date" label="修改时间" min-width="150">
             <template #default="scope">
               <div class="date">
                 {{ scope.row.date }}
               </div>
             </template>
           </el-table-column>
-          <el-table-column prop="size" align="right" label="大小" width="200">
+          <el-table-column prop="size" align="right" label="大小" min-width="120">
             <template #default="scope">
               <div class="size">
                 {{ scope.row.size }}
@@ -95,68 +99,60 @@
           </el-table-column>
         </el-table>
       </div>
-      <div class="pan__body-detail">
-
-      </div>
+      <FileDetail :info="currentDetail" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, ref, computed } from 'vue';
-import type { UploadInstance, UploadFile, UploadFiles } from 'element-plus'
-import { getFilesListApi, uploadFilesApi, delectFileApi, fileUploadApi, fileMergeApi } from '@/api/home.js';
+import FileDetail from "./components/FileDetail.vue";
+import type { UploadInstance, UploadFile } from 'element-plus'
+import { getFilesListApi, delectFileApi, fileUploadApi, fileFinishApi } from '@/api/file.js';
 import { useRouter, useRoute } from 'vue-router';
-import { getFileHash, blobSlice } from './hook'
+import { getFileHash } from './hook'
+import { FilesDetail } from './props';
 
 const router = useRouter()
 const route = useRoute()
 
-// 文件详情
-interface FilesDetail {
-  originalname: string
-  date: string
-  name: string
-  size: string
-  dir: string
-  type: string
-  url: string
-}
-
 const uploadRef = ref<UploadInstance>()
-// 上传文件
-async function submitUploadFiles(uploadFile: UploadFile) {
-  console.log(uploadFile);
+async function submitUploadFiles() {
+  const file = tempFile.raw
+  const chunkSize = 10 * 1024 * 1024; // 每个chunk的大小，设置为10兆
+  // const hash = await hashFile(file, chunkSize)
+  // console.log(hash);
+  getFileHash(file)
+  
   const formData = new FormData();
   formData.append('dir', currentFolder.value)
-  formData.append('singleFile', uploadFile.raw);
-  await uploadFilesApi(formData)
-  uploadRef.value!.clearFiles()
-  initPage()
+  formData.append('singleFile', file);
+  // await uploadFilesApi(formData)
+  // uploadRef.value!.clearFiles()
+  // initPage()
 }
 
 const emit = defineEmits(['getProgress'])
 
+// 上传文件
 const uploading = ref<boolean>(true)
 let tempFile: UploadFile
 async function submitUploadLargeFiles(uploadFile: UploadFile) {
   tempFile = uploadFile
+  // return
   const file = uploadFile.raw
   const { size, name, type } = file;
   const chunkSize = 10 * 1024 * 1024; // 每个chunk的大小，设置为10兆
   const hash = await getFileHash(file); //文件 hash 
-  let chunkindex = 0
   let uploaded = 0;
   const local = localStorage.getItem(hash);
   if (local) {
     uploaded = Number(local);
   }
-  console.log('开始分割');
-  
   while (uploaded < size && uploading.value) {
     const chunk = file.slice(uploaded, uploaded + chunkSize, type);
     const formData = new FormData();
-    formData.append('dir', '/');
+    formData.append('dir', currentFolder.value)
     formData.append('name', name);
     formData.append('type', type);
     formData.append('size', String(size));
@@ -165,8 +161,6 @@ async function submitUploadLargeFiles(uploadFile: UploadFile) {
     formData.append('offset', String(uploaded));
     try {
       await fileUploadApi(formData)
-      chunkindex += 1
-      console.log(`第${chunkindex}片段擅闯完成`);
     } catch (e) {
       // output.innerText = '上传失败。' + e.message;
       return;
@@ -179,6 +173,14 @@ async function submitUploadLargeFiles(uploadFile: UploadFile) {
     }
   }
   localStorage.removeItem(hash);
+  await fileFinishApi({ // 上传成功，改hash值
+    name,
+    size,
+    type,
+    offset: String(uploaded),
+    hash,
+    dir: currentFolder.value
+  })
   uploadRef.value!.clearFiles()
   initPage()
 }
@@ -208,6 +210,12 @@ async function inFolder(detail: FilesDetail) {
     }
   })
   initPage()
+}
+
+// 详情
+const currentDetail = ref<FilesDetail>()
+function getDetails(detail: FilesDetail) {
+  currentDetail.value = detail
 }
 
 // 面包屑快速跳转
@@ -245,18 +253,6 @@ onMounted(() => {
   currentFolder.value = route.query.path as string || '/'
   initPage()
 })
-
-
-function getArr<T>(cont:T, len:number): T[] {
-    // const arr:T[]=[] //这是一个泛型数组 或者这样写
-    const arr: Array<T> = []; //泛型必须要有一个初始值
-    for (let i = 0; i < len;i++) {
-      arr.push(cont)
-    }
-    return arr
-}
-const arr1 = getArr<number>(11.1, 3);
-console.log(arr1)
 </script>
 
 <style lang="scss" scoped>
@@ -281,9 +277,10 @@ console.log(arr1)
     height: calc(100% - 40px);
     display: flex;
     .pan__body-contain {
-      width: 80%;
+      width: calc(100% - 300px);
       height: 100%;
       padding: 0 20px;
+      border-right: 1px solid #f0f0f0;
       .pan__body-contain--nav {
         font-size: 12px;
         height: 40px;
@@ -307,7 +304,11 @@ console.log(arr1)
         }
       }
       .files {
+        width: calc(100% - 200px);
         font-size: 12px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
         cursor: pointer;
         .files-name {
           &:hover {
@@ -339,11 +340,6 @@ console.log(arr1)
       .folder {
         cursor: pointer;
       }
-    }
-    .pan__body-detail {
-      width: 20%;
-      height: 100%;
-      border-left: 1px solid #f0f0f0;
     }
   }
 }

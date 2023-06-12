@@ -4,61 +4,39 @@ const { slice, mozSlice, webkitSlice } = File.prototype
 export const blobSlice = slice || mozSlice || webkitSlice;
 export const hashFile = (file: File, chunkSize: number): Promise<string> => {
   return new Promise((resolve) => {
-    const chunks = Math.ceil(file.size / chunkSize);
-    let currentChunk = 0;
-    const spark = new SparkMD5.ArrayBuffer();
-    const fileReader = new FileReader();
-    function loadNext() {
-      const start = currentChunk * chunkSize;
-      const end = start + chunkSize >= file.size ? file.size : start + chunkSize;
-      fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
-    }
-    fileReader.onload = (e: any) => {
-      spark.append(e.target.result); // Append array buffer
-      currentChunk += 1;
-      if (currentChunk < chunks) {
-        loadNext();
-      } else {
-        console.log('finished loading');
-        const result = spark.end();
-        // 如果单纯的使用result 作为hash值的时候, 如果文件内容相同，而名称不同的时候
-        // 想保留两个文件无法保留。所以把文件名称加上。
-        const sparkMd5 = new SparkMD5();
-        sparkMd5.append(result);
-        sparkMd5.append(file.name);
-        const hexHash = sparkMd5.end();
-        resolve(hexHash);
+    let loaded = 0
+    const reader = new FileReader()
+    const spark = new SparkMD5.ArrayBuffer()
+    reader.onload = function (e) {
+      console.log(`${parseInt(String(loaded/file.size*100))}%`);
+      
+      const res = e.target?.result
+      spark.append(res)
+      if (loaded < file.size) { // 已载入小于总大小，继续载入
+        loadFile()
+      } else { // 载入完成
+        const md5 = spark.end();
+        console.log(md5);
+        
+        resolve(md5)
       }
-    };
-    fileReader.onerror = () => {
-      console.warn('文件读取失败！');
-    };
-    loadNext();
+    }
+    function loadFile() {
+      reader.readAsArrayBuffer(file.slice(loaded, loaded + chunkSize))
+      loaded += chunkSize
+    }
+    loadFile()
   })
 }
 
 export const getFileHash = (file: File): Promise<string> => {
   return new Promise((resolve) => {
-    const spark = new SparkMD5.ArrayBuffer();
-    const fileReader = new FileReader();
-    // const sliceFile = file.slice(0, 10 * 1024 * 1024)
-    const sliceFile = file
-    
-    fileReader.readAsArrayBuffer(sliceFile);
-    fileReader.onload = (e: any) => {
-      spark.append(e.target.result); // Append array buffer
-      
-      console.log(sliceFile);
-      console.log('finished loading');
-      const result = spark.end();
-      const sparkMd5 = new SparkMD5();
-      sparkMd5.append(result);
-      sparkMd5.append(file.name);
-      const hexHash = sparkMd5.end();
-      resolve(hexHash);
-    };
-    fileReader.onerror = () => {
-      console.warn('文件读取失败！');
-    };
+    const reader = new FileReader()
+    reader.readAsArrayBuffer(file.slice(0, 100))
+    reader.onload = function (e) {
+      const res = e.target?.result
+      const md5 = SparkMD5.ArrayBuffer.hash(res)
+      resolve(md5)
+    }
   })
 }

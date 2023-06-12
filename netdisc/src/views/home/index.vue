@@ -7,8 +7,13 @@
 						<div class="bd-left-header">
 							<img src="../../assets/wp-logo.png" alt="" />
 						</div>
-						<div ref="buttonRef" class="bd-right-header" @click="onClickOutside()">
-							<Svgicon icon="icon-download" />
+						<div class="bd-right-header">
+							<div ref="buttonRef" class="bd-right__download" @click="onClickOutside()">
+								<Svgicon icon="icon-download" />
+							</div>
+							<div style="margin-left: 10px;" @click="getMD5">
+								<Svgicon icon="icon-copy" />
+							</div>
 						</div>
 					</div>
 				</div>
@@ -82,6 +87,10 @@ function getProgress(percentage: number) {
 	console.log('upload');
 	buttonRef.value.click()
 	uploadPercentage.value = percentage
+}
+
+function getMD5() {
+	
 }
 </script>
 

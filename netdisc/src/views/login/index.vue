@@ -41,7 +41,7 @@
     v-model="dialogVisible"
     append-to-body
     width="600px"
-    custom-class="loginDialog"
+    class="loginDialog"
   >
     <div class="pass-login-pop-content">
       <el-tabs
@@ -51,75 +51,30 @@
         @tab-click="handleClick"
       >
         <el-tab-pane label="账号登录" name="account">
-          <div class="account_content">
-						<el-form
-							ref="ruleFormRef"
-							:model="ruleForm"
-							:rules="rules"
-							label-width="120px"
-							class="demo-ruleForm"
-							:size="formSize"
-							status-icon
-						>
-							<el-form-item label="" label-width="0" prop="username">
-								<el-input
-									v-model="ruleForm.username"
-									placeholder="手机号/邮箱/用户名"
-									size="large"
-									class="user"
-								/>
-							</el-form-item>
-							<el-form-item label="" label-width="0" prop="password">
-								<el-input
-									v-model="ruleForm.password"
-									placeholder="密码"
-									show-password
-									size="large"
-									class="password"
-								/>
-							</el-form-item>
-							<el-button class="act_login" type="primary" round size="large" @click="clickLogin(ruleFormRef)">
-								登录
-							</el-button>
-							<p>阅读并接受<a target="_blank" href="http://passport.baidu.com/static/passpc-account/html/protocal.html">百度用户协议</a> 和 <a target="_blank" href="http://privacy.baidu.com/policy">隐私政策</a></p>
-						</el-form>
-          </div>
+          <AccountLogin />
         </el-tab-pane>
         <el-tab-pane label="扫码登录" name="qr">
-          <div class="qr_content">
-            <div class="content_img">
-              <img src="../../assets/qrcode.png" alt="" />
-              <img src="../../assets/phone-scan-case.png" alt="" />
-            </div>
-            <p class="content_tip">
-              最新版百度网盘App-「我的」页面右上角-扫一扫
-            </p>
-					</div>
+          <Qr />
         </el-tab-pane>
-        <el-tab-pane label="短信登录" name="sma"></el-tab-pane>
+        <el-tab-pane label="注册" name="sma">
+          <Register />
+        </el-tab-pane>
       </el-tabs>
     </div>
   </el-dialog>
 </template>
 
-<script setup lang="ts">
-import { login, logout } from '@/api/login.js';
-import { reactive, ref } from "vue";
-import type { FormInstance, FormRules } from 'element-plus'
-import { useRouter } from 'vue-router';
+<script lang="ts" setup>
+import AccountLogin from "./AccountLogin.vue";
+import Register from "./Register.vue";
+import Qr from "./Qr.vue";
+import { ref } from "vue";
 
 const loginType = ref<"account" | "qr" | "sms">("account");
 
 function handleClick() {}
 
 const dialogVisible = ref<false | true>(false);
-
-const formSize = ref('default')
-const ruleFormRef = ref<FormInstance>()
-const ruleForm = reactive({
-  username: '',
-	password: ''
-})
 
 // const username = ref<string>('')
 // const password = ref<string>('')
@@ -130,37 +85,8 @@ function openLoginDialog() {
   // ElMessageBox.confirm("Are you sure to close this dialog?").then(() => {});
 }
 
-const rules = reactive<FormRules>({
-	username: [
-    { required: true, message: '请您输入手机号/用户名/邮箱', trigger: 'blur' }
-  ],
-	password: [
-    { required: true, message: '请您输入密码', trigger: 'blur' }
-  ],
-})
 
 
-const router = useRouter()
-const clickLogin = async (formEl: FormInstance | undefined) => {
-	console.log(formEl);
-	
-  if (!formEl) return
-  await formEl.validate((valid, fields) => {
-    if (valid) {
-			const { password, username } = ruleForm
-			login({
-				username: username,
-				password: password
-			}).then(() => {
-				router.push({
-					path: '/home'
-				})
-			})
-    } else {
-      console.log('error submit!', fields)
-    }
-  })
-}
 </script>
 
 <style lang="scss" scoped>
@@ -276,38 +202,6 @@ const clickLogin = async (formEl: FormInstance | undefined) => {
         background-color: #fff;
       }
     }
-    .account_content {
-      padding: 20px;
-			.user {
-				width: 100%;
-			}
-			.password {
-				margin-top: 10px;
-				width: 100%;
-			}
-			.act_login {
-				width: 100%;
-				margin-top: 30px;
-			}
-			p {
-				text-align: center;
-			}
-			a {
-				text-decoration: none;
-			}
-    }
-    .qr_content {
-			padding: 20px;
-      .content_img {
-        display: flex;
-        img {
-          width: 50%;
-        }
-      }
-      .content_tip {
-        text-align: center;
-      }
-		}
   }
 }
 </style>

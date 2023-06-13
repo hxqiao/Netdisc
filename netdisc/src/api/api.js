@@ -77,7 +77,13 @@ export default function myAxios(axiosConfig, customOptions, loadingOptions, axio
       error.config && removePending(error.config);
       custom_options.loading && closeLoading(custom_options); // 关闭loading
       custom_options.error_message_show && httpErrorStatusHandle(error); // 处理错误状态码
-      const { data: { message }} = error.response
+      const { data: { message }, status} = error.response
+      console.log(status === 401);
+      if (status === 401) {
+        router.push({
+          path: '/'
+        })
+      }
       if (message) {
         ElMessage({
           type: 'error',
@@ -182,7 +188,7 @@ function verifyToken(config) {
     return true
   } else {
     router.push({
-      path: './'
+      path: '/'
     })
     return false
   }

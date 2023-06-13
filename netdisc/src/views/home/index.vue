@@ -4,7 +4,7 @@
 			<header class="u-header">
 				<div class="bd-header bd-login-header">
 					<div class="bd-login-header__out">
-						<div class="bd-left-header">
+						<div class="bd-left-header" @click="toLogin">
 							<img src="../../assets/wp-logo.png" alt="" />
 						</div>
 						<div class="bd-right-header">
@@ -56,7 +56,9 @@ import { ref, unref } from 'vue'
 import { ClickOutside as vClickOutside } from 'element-plus'
 import MyFiles from './MyFiles.vue'
 import FilesList from './FilesList.vue'
+import { useRouter } from 'vue-router';
 
+const router = useRouter()
 const navList = ref([
 	{
 		name: '首页',
@@ -91,6 +93,12 @@ function getProgress(percentage: number) {
 
 function getMD5() {
 	
+}
+
+function toLogin() {
+  router.push({
+    path: '/login'
+  })
 }
 </script>
 

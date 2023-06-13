@@ -3,7 +3,7 @@
     <header class="u-header">
       <div class="bd-header bd-login-header">
         <div class="bd-login-header__out">
-          <div class="bd-left-header">
+          <div class="bd-left-header" @click="toLogin">
             <img src="../../assets/wp-logo.png" alt="" />
           </div>
           <div class="bd-right-header">
@@ -57,7 +57,7 @@
           <Qr />
         </el-tab-pane>
         <el-tab-pane label="注册" name="sma">
-          <Register />
+          <Register @success="successRegister" />
         </el-tab-pane>
       </el-tabs>
     </div>
@@ -69,7 +69,9 @@ import AccountLogin from "./AccountLogin.vue";
 import Register from "./Register.vue";
 import Qr from "./Qr.vue";
 import { ref } from "vue";
+import { useRouter } from 'vue-router';
 
+const router = useRouter()
 const loginType = ref<"account" | "qr" | "sms">("account");
 
 function handleClick() {}
@@ -85,7 +87,16 @@ function openLoginDialog() {
   // ElMessageBox.confirm("Are you sure to close this dialog?").then(() => {});
 }
 
+// 注册成功，关闭弹窗
+function successRegister() {
+  dialogVisible.value = false
+}
 
+function toLogin() {
+  router.push({
+    path: '/'
+  })
+}
 
 </script>
 
@@ -110,6 +121,7 @@ function openLoginDialog() {
           width: 140px;
           height: 100%;
           display: flex;
+          cursor: pointer;
           img {
             width: 100%;
             object-fit: contain;

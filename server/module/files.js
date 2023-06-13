@@ -1,7 +1,8 @@
 const fs = require('fs');
-const multer = require('multer');
 const path = require('path')
 const uploader = require('express-fileupload');
+require('dotenv').config()
+const auth = require('../middleware/auth')
 const { video } = require('../utils/media');
 const { extname, resolve } = path;
 const { promises: { writeFile, appendFile, }, existsSync } = fs;
@@ -10,7 +11,8 @@ module.exports = function (app) {
 
   app.use(uploader());
   // 获取文件列表
-  app.get('/file/list', function (req, res) {
+  app.get('/file/list', auth, async function (req, res) {
+    const { user } = req;
     let components = []
     const files = fs.readdirSync(`./uploads${req.query.dir}`)
     files.forEach(function (item, index) {
@@ -26,24 +28,8 @@ module.exports = function (app) {
     })
   })
 
-  const upload = multer({
-    storage: multer.diskStorage({
-      destination: function (req, file, cb) {
-        cb(null, `./uploads${req.body.dir}`);
-      },
-      hashname: function (req, file, cb) {
-        //file.originalname上传文件的原始文件名
-        var changedName = (new Date().getTime()) + '-' + Buffer.from(file.originalname, "latin1").toString(
-          "utf8"
-        );
-        cb(null, changedName);
-      }
-      
-    })
-  });
-
   // 删除文件
-  app.post('/file/delect', (req, res) => {
+  app.post('/file/delect', auth, (req, res) => {
     const { dir, name } = req.body
     const path = './uploads' + dir + name
     if (fs.existsSync(path)) {
@@ -61,7 +47,7 @@ module.exports = function (app) {
   })
 
   // 重命名文件
-  app.post('/file/rename', (req, res) => {
+  app.post('/file/rename', auth, (req, res) => {
     const { dir, name } = req.body
     const path = './uploads' + dir + name
     fs.rename(path, newPath, (err) => {
@@ -74,13 +60,13 @@ module.exports = function (app) {
   })
 
   // 上传文件
-  app.post('/file/upload', async (req, res) => {
+  app.post('/file/upload', auth, async (req, res) => {
     const { name, size, type, offset, hash, dir } = req.body;
     const { file } = req.files;
 
     const ext = extname(name)
-    const hashname = resolve(__dirname, `./uploads${dir}${hash}${ext}`);
-    const filename = resolve(__dirname, `./uploads${dir}${name}`);
+    const hashname = resolve(__dirname, `../uploads${dir}${hash}${ext}`);
+    const filename = resolve(__dirname, `../uploads${dir}${name}`);
     if (!existsSync(filename)) {
       if (offset > 0) {
         if (!existsSync(hashname)) {
@@ -112,8 +98,8 @@ module.exports = function (app) {
   app.post('/file/finish', (req, res) => {
     const { name, size, type, offset, hash, dir } = req.body;
     const ext = extname(name)
-    const hashname = resolve(__dirname, `./uploads${dir}${hash}${ext}`);
-    const filename = resolve(__dirname, `./uploads${dir}${name}`);
+    const hashname = resolve(__dirname, `../uploads${dir}${hash}${ext}`);
+    const filename = resolve(__dirname, `../uploads${dir}${name}`);
     if (existsSync(hashname)) {
       fs.renameSync(hashname, filename)
       res.json({

@@ -43,10 +43,7 @@ app.all('*', function(req, res, next) {
 
 //配置服务端口
 var server = app.listen(8080, function() {
-
-    var host = server.address().address;
-
-    var port = server.address().port;
-
-    console.log('Example app listening at http://127.0.0.1:'+port);
+  var host = server.address().address;
+  var port = server.address().port;
+  console.log('app listening at http://127.0.0.1:'+port);
 })

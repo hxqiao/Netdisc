@@ -41,6 +41,8 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter()
 
+const emit = defineEmits(['success'])
+
 const rules = reactive<FormRules>({
 	username: [
     { required: true, message: '请您输入手机号/用户名/邮箱', trigger: 'blur' }
@@ -60,20 +62,19 @@ const clickRegister = async (formEl: FormInstance | undefined) => {
   await formEl.validate(async (valid, fields) => {
     if (valid) {
       const { password, username } = ruleForm
-			await registerApi({
+			const { username: user} = await registerApi({
 				username: username,
 				password: password
 			})
-			router.push({
-        path: '/home'
+      ElMessage({
+        type: 'success',
+        message: `用户${ user }注册成功！`
       })
+      emit('success')
     }
   })
 }
 
-const clickLogin = async () =>{
-
-}
 </script>
 
 <style lang="scss" scoped>

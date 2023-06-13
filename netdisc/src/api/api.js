@@ -3,7 +3,10 @@
  * @LastEditTime : 2022-06-23 17:45:11
  */
 import axios from 'axios'
-import { ElLoading, ElMessage } from 'element-plus';
+import { router } from '@/router';
+import { Storage } from '@/utils/Storage';
+import { ACCESS_TOKEN_KEY } from '@/enums/cacheEnum';
+import { ElLoading } from 'element-plus';
 
 const pendingMap = new Map();
 
@@ -26,15 +29,15 @@ export default function myAxios(axiosConfig, customOptions, loadingOptions, axio
     repeat_request_cancel: false, // 是否开启取消重复请求, 默认为 true
     loading: false, // 是否开启loading层效果, 默认为false
     reduct_data_format: true, // 是否开启简洁的数据结构响应, 默认为true
-    error_message_show: true, // 是否开启接口错误信息展示,默认为true
-    code_message_show: true, // 是否开启code不为0时的信息提示, 默认为true
+    error_message_show: false, // 是否开启接口错误信息展示,默认为true
+    code_message_show: false, // 是否开启code不为0时的信息提示, 默认为true
   }, customOptions);
   
   // 请求拦截器
   service.interceptors.request.use(
     config => {
-      if (!getVerifyToken(config)) { // 验证token
-        return;
+      if (!verifyToken(config)) { // 验证token
+        return config;
       }
       removePending(config);
       custom_options.repeat_request_cancel && addPending(config);
@@ -74,7 +77,14 @@ export default function myAxios(axiosConfig, customOptions, loadingOptions, axio
       error.config && removePending(error.config);
       custom_options.loading && closeLoading(custom_options); // 关闭loading
       custom_options.error_message_show && httpErrorStatusHandle(error); // 处理错误状态码
-      return Promise.reject(error);
+      const { data: { message }} = error.response
+      if (message) {
+        ElMessage({
+          type: 'error',
+          message
+        })
+      }
+      return Promise.reject(error.response);
     }
   );
   return service(axiosConfig)
@@ -110,20 +120,20 @@ function httpErrorStatusHandle(error){
   let message = '';
   if (error && error.response) {
     switch (error.response.status) {
-        case 302: message = '接口重定向了！';break;
-        case 400: message = '参数不正确！';break;
-        case 401: message = '您未登录，或者登录已经超时，请先登录！';break;
-        case 403: message = '您没有权限操作！'; break;
-        case 404: message = `请求地址出错: ${error.response.config.url}`; break; // 在正确域名下
-        case 408: message = '请求超时！'; break;
-        case 409: message = '系统已存在相同数据！'; break;
-        case 500: message = '服务器内部错误！'; break;
-        case 501: message = '服务未实现！'; break;
-        case 502: message = '网关错误！'; break;
-        case 503: message = '服务不可用！'; break;
-        case 504: message = '服务暂时无法访问，请稍后再试！'; break;
-        case 505: message = 'HTTP版本不受支持！'; break;
-        default: message = '异常问题，请联系管理员！'; break
+      case 302: message = '接口重定向了！';break;
+      case 400: message = '参数不正确！';break;
+      case 401: message = '您未登录，或者登录已经超时，请先登录！';break;
+      case 403: message = '您没有权限操作！'; break;
+      case 404: message = `请求地址出错: ${error.response.config.url}`; break; // 在正确域名下
+      case 408: message = '请求超时！'; break;
+      case 409: message = '系统已存在相同数据！'; break;
+      case 500: message = '服务器内部错误！'; break;
+      case 501: message = '服务未实现！'; break;
+      case 502: message = '网关错误！'; break;
+      case 503: message = '服务不可用！'; break;
+      case 504: message = '服务暂时无法访问，请稍后再试！'; break;
+      case 505: message = 'HTTP版本不受支持！'; break;
+      default: message = '异常问题，请联系管理员！'; break
     }
   }
   if (error.message.includes('timeout')) message = '网络请求超时！';
@@ -164,9 +174,18 @@ function addPending(config){
  * 验证token是否有效
  * @param {*}
  */
-function getVerifyToken(config) {
-  const token = localStorage.getItem('token');
-  return true
+function verifyToken(config) {
+  const token = Storage.get(ACCESS_TOKEN_KEY);
+  if (token && config.headers) {
+    // 请求头token信息，请根据实际情况进行修改
+    config.headers['Authorization'] = token;
+    return true
+  } else {
+    router.push({
+      path: './'
+    })
+    return false
+  }
 }
 
 /**

@@ -38,7 +38,7 @@
 import { reactive, ref } from "vue";
 import { Storage } from '@/utils/Storage';
 import { ACCESS_TOKEN_KEY } from '@/enums/cacheEnum';
-import { loginApi } from '@/api/login.js';
+import { loginApi } from '@/api/login/index';
 import { useRouter } from 'vue-router';
 import type { FormInstance, FormRules } from 'element-plus'
 

@@ -108,7 +108,7 @@
 import { onMounted, ref, computed } from 'vue';
 import FileDetail from "./components/FileDetail.vue";
 import type { UploadInstance, UploadFile } from 'element-plus'
-import { getFilesListApi, delectFileApi, fileUploadApi, fileFinishApi } from '@/api/file.js';
+import { getFilesListApi, delectFileApi, fileUploadApi, fileFinishApi } from '@/api/file/index';
 import { useRouter, useRoute } from 'vue-router';
 import { getFileHash } from './hook'
 import { FilesDetail } from './props';

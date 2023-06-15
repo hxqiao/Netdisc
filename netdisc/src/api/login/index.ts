@@ -1,6 +1,6 @@
-import myAxios from '@/api/api.js'
+import myAxios from '@/api'
 
-export function logout(params) {
+export function logout(params: API.LogoutParams) {
   return myAxios({
     url: '/logout',
     method: 'get',
@@ -10,8 +10,8 @@ export function logout(params) {
   })
 }
 
-export function loginApi(data) {
-  return myAxios({
+export function loginApi(data: API.LoginParams) {
+  return myAxios<API.TokenData>({
     url: '/login',
     method: 'post',
     data
@@ -20,7 +20,7 @@ export function loginApi(data) {
   })
 }
 
-export function registerApi(data) {
+export function registerApi(data: API.registerParams) {
   return myAxios({
     url: '/register',
     method: 'post',

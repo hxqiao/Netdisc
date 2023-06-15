@@ -1,6 +1,7 @@
-import myAxios from '@/api/api.js'
+import myAxios from '@/api'
 
-export function getFilesListApi(params) {
+// 获取文件列表
+export function getFilesListApi(params: API.GetFilesListParams) {
   return myAxios({
     url: '/file/list',
     method: 'get',
@@ -10,48 +11,43 @@ export function getFilesListApi(params) {
   })
 }
 
-export function delectFileApi(data) {
+// 删除文件
+export function delectFileApi(data: API.DelectFileParams) {
   return myAxios({
     url: '/file/delect',
     method: 'post',
-    processData: false,
-    contentType: false,
     data
   }, {
     loading: false
   })
 }
 
-export function fileUploadApi(data) {
+// 上传文件
+export function fileUploadApi(data: FormData) {
   return myAxios({
     url: '/file/upload',
     method: 'post',
-    processData: false,
-    contentType: false,
     data
   }, {
     loading: false
   })
 }
 
-export function fileFinishApi(data) {
+// 完成上传文件
+export function fileFinishApi(data: API.FileFinishParams) {
   return myAxios({
     url: '/file/finish',
     method: 'post',
-    processData: false,
-    contentType: false,
     data
   }, {
     loading: false
   })
 }
 
-export function fileRenameApi(data) {
+export function fileRenameApi(data: any) {
   return myAxios({
     url: '/file/rename',
     method: 'post',
-    processData: false,
-    contentType: false,
     data
   }, {
     loading: false

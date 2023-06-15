@@ -3,6 +3,7 @@
  * @LastEditTime : 2022-06-23 17:45:11
  */
 import axios from 'axios'
+import type { AxiosResponse, AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
 import { router } from '@/router';
 import { Storage } from '@/utils/Storage';
 import { ACCESS_TOKEN_KEY } from '@/enums/cacheEnum';
@@ -15,22 +16,38 @@ const LoadingInstance = {
   _count: 0
 };
 
-// const interceptor_10 = ['market/video']
+type CustomOptions = {
+  repeat_request_cancel?: Boolean, // 是否开启取消重复请求, 默认为 true
+  loading?: Boolean, // 是否开启loading层效果, 默认为false
+  reduct_data_format?: Boolean, // 是否开启简洁的数据结构响应, 默认为true
+  error_message_show?: Boolean, // 是否开启接口错误信息展示,默认为true
+  code_message_show?: Boolean, // 是否开启code不为0时的信息提示, 默认为true
+}
 
-export default function myAxios(axiosConfig, customOptions, loadingOptions, axiosServiceConfig) {
-  // console.log(`vueDouyinApi：${axiosConfig.url}`);
-  const service = axios.create(Object.assign({
-    // baseURL: import.meta.env.VITE_URL,
-    baseURL: 'http://127.0.0.1:8080',
-    timeout: 10000
-  }, axiosServiceConfig))
+// type LoadingOptions = {
+//   background?: string
+//   text?: string
+//   fullscreen: true
+// }
+
+const myAxios = async <T = any>(
+  axiosConfig: AxiosRequestConfig, 
+  customOptions: CustomOptions = {}
+): Promise<T> => {
+  const service = axios.create(
+    Object.assign({
+      // baseURL: import.meta.env.VITE_URL,
+      baseURL: 'http://127.0.0.1:8080',
+      timeout: 10000
+    }
+  ))
 
   const custom_options = Object.assign({
-    repeat_request_cancel: false, // 是否开启取消重复请求, 默认为 true
-    loading: false, // 是否开启loading层效果, 默认为false
-    reduct_data_format: true, // 是否开启简洁的数据结构响应, 默认为true
-    error_message_show: false, // 是否开启接口错误信息展示,默认为true
-    code_message_show: false, // 是否开启code不为0时的信息提示, 默认为true
+    repeat_request_cancel: false,
+    loading: false,
+    reduct_data_format: true,
+    error_message_show: false,
+    code_message_show: false,
   }, customOptions);
   
   // 请求拦截器
@@ -45,7 +62,7 @@ export default function myAxios(axiosConfig, customOptions, loadingOptions, axio
       if (custom_options.loading){
         LoadingInstance._count++;
         if (LoadingInstance._count === 1){
-          LoadingInstance._target = ElLoading.service(loadingOptions);
+          LoadingInstance._target = ElLoading.service({ fullscreen: true });
         }
       }
       return config;
@@ -61,9 +78,7 @@ export default function myAxios(axiosConfig, customOptions, loadingOptions, axio
       removePending(response.config);
       custom_options.loading && closeLoading(custom_options); // 关闭loading
       // 自定义状态码code处理
-      if (response.data.code === 0){
-        return response.data;
-      } else if (!custom_options.code_message_show) {
+      if (response.data.code === 0 || !custom_options.code_message_show){
         return response.data;
       } else { // 自定义错误码处理（code_message_show为true时关闭，注意与error_message_show请求错误码的区别）
         let message = '异常问题'
@@ -93,8 +108,15 @@ export default function myAxios(axiosConfig, customOptions, loadingOptions, axio
       return Promise.reject(error.response);
     }
   );
-  return service(axiosConfig)
+  try {
+    const res = await service.request(axiosConfig)
+    return res as any;
+  } catch (error: any) {
+    return Promise.reject(error);
+  }
 }
+
+export default myAxios
 
 /* 重设消息提示，多个API接口只显示一个 */
 let messageInstance = null;
@@ -167,7 +189,7 @@ function closeLoading(_options){
  * 储存每个请求唯一值, 也就是cancel()方法, 用于取消请求
  * @param {*} config 
  */
-function addPending(config){
+function addPending(config: InternalAxiosRequestConfig){
   const pendingKey = getPendingKey(config);
   config.cancelToken = config.cancelToken || new axios.CancelToken((cancel) => {
     if (!pendingMap.has(pendingKey)){
@@ -180,7 +202,7 @@ function addPending(config){
  * 验证token是否有效
  * @param {*}
  */
-function verifyToken(config) {
+function verifyToken(config: InternalAxiosRequestConfig) {
   const token = Storage.get(ACCESS_TOKEN_KEY);
   if (token && config.headers) {
     // 请求头token信息，请根据实际情况进行修改
@@ -198,7 +220,7 @@ function verifyToken(config) {
  * 删除重复的请求
  * @param {*} config 
  */
-function removePending(config){
+function removePending(config: InternalAxiosRequestConfig){
   const pendingKey = getPendingKey(config);
   if (pendingMap.has(pendingKey)) {
     const cancelToken = pendingMap.get(pendingKey);
@@ -212,7 +234,7 @@ function removePending(config){
  * @param {*} config 
  * @returns string
  */
-function getPendingKey(config){
+function getPendingKey(config: InternalAxiosRequestConfig){
   let {url, method, params, data} = config;
   if (typeof data === 'string') data = JSON.parse(data); // response里面返回的config.data是个字符串对象
   return [url, method, JSON.stringify(params), JSON.stringify(data)].join('&');

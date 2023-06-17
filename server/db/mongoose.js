@@ -12,6 +12,8 @@ conn.on('connected', function(err) {
   }
   console.log('mongodb启动成功')
 })
+
+// 用户表
 const UserSchema = new mongoose.Schema({
   username: { type: String, unique: true },
   password: { 
@@ -22,8 +24,23 @@ const UserSchema = new mongoose.Schema({
 })
 const User = mongoose.model('User', UserSchema)
 
-// User.db.dropCollection('users')
-
+// 抽卡卡牌表
+const CardSchema = new mongoose.Schema({
+  count: { type: String },
+  gacha_id: { type: String },
+  gacha_type: { type: String },
+  id: { type: String },
+  item_id: { type: String },
+  item_type: { type: String },
+  lang: { type: String },
+  name: { type: String },
+  rank_type: { type: String },
+  time: { type: String },
+  uid: { type: String }
+})
+const Card = mongoose.model('Card', CardSchema)
+// Card.db.dropCollection('cards')
 module.exports = {
-  User
+  User,
+  Card
 }

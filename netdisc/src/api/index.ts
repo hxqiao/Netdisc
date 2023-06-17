@@ -38,7 +38,7 @@ const myAxios = async <T = any>(
     Object.assign({
       // baseURL: import.meta.env.VITE_URL,
       baseURL: 'http://127.0.0.1:8080',
-      timeout: 10000
+      timeout: 20000
     }
   ))
 

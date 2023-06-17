@@ -112,24 +112,29 @@ import { getFilesListApi, delectFileApi, fileUploadApi, fileFinishApi } from '@/
 import { useRouter, useRoute } from 'vue-router';
 import { getFileHash } from './hook'
 import { FilesDetail } from './props';
+import axios from 'axios'
 
 const router = useRouter()
 const route = useRoute()
 
 const uploadRef = ref<UploadInstance>()
 async function submitUploadFiles() {
-  const file = tempFile.raw
-  const chunkSize = 10 * 1024 * 1024; // 每个chunk的大小，设置为10兆
-  // const hash = await hashFile(file, chunkSize)
-  // console.log(hash);
-  getFileHash(file)
-  
-  const formData = new FormData();
-  formData.append('dir', currentFolder.value)
-  formData.append('singleFile', file);
-  // await uploadFilesApi(formData)
-  // uploadRef.value!.clearFiles()
-  // initPage()
+  const instance = axios.create({
+    baseURL: 'https://api-takumi.mihoyo.com/common/gacha_record',
+    timeout: 1000,
+    headers: {'X-Custom-Header': 'foobar'}
+  });
+  // console.log(instance);
+  instance({
+    url: '/api/getGachaLog',
+    method: 'get',
+    params: {
+      authkey_ver: 1,
+      authkey: 'Q2jmqK2HMauCfaqew+fd+Cs0FDYbeVare91AAw7DyIntQqzT2iGNHe6pFvztW3rU5Y6U1n6Pnn9WTjvEdAHWGToo6jOEYaiw/hkR6yFeeMjmSClFCiEvm5gzAq6D7tqPuu8HbZ2zD051x3d7P3AZmAFx2mjZQnpEfcwmaJaRekGJFDVJisA08CkXwdaQ551/tks/Sr46bCjf4+JO7WqMewiuCVj2VuIoXSoPCLWzG6sPoAt+txQVHRkD5iGTn15jJFnjTJSCPCWLUxDHCLlsMRRChFiyEg158id9ohhnOycUcQRcFXB8CtAHcIBbGNR5z3IO2DqT8JP8Mx488R1hAUnCGqNHSwQ2Lc89AR+pCGWPK/inCIZdJdlOfkeU5/8Mlu/tWvvso4CQW1lW2/JSJfyzx/pSaj8e3gSh94BI2LSuDMwdSZsdPtJXVxQhbgY6VgnOOap3xemdNg0cr5/euaIe2ZgIBXUMegRLjaAR2RsIIHlmdL3iNCW50s3e6bY/Hmi/5QkwFzcxSBsCMsR8/s8BtNp9tNav2f4fEe7juz+kH2HWpb0IVxXWvG4aLl1ZkOCfHZxMJ9KWNjbm5GTiUDoQ7+34LrVq7hRoAS5mI6FghhEhKD+/lV9lcsNUZsejDP5npi8cHHa56mt1nr+L3bOXPIz2WkGjJag7aoq5/Kg=',
+      lang: 'zh-cn',
+      gacha_id: 'ad9815cdf2308104c377aac42c7f0cdd8d'
+    }
+  })
 }
 
 const emit = defineEmits(['getProgress'])

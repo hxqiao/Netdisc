@@ -18,6 +18,8 @@
 					</div>
 				</div>
 			</header>
+
+			<!-- 下载百分比 -->
 			<el-popover
 				ref="popoverRef"
 				:virtual-ref="buttonRef"
@@ -30,7 +32,7 @@
 				<div class="aside-wp-block">
 					<div class="aside-nav__main">
 						<div class="aside-nav__main-top">
-							<div v-for="item of navList" class="aside-nav__main_item">
+							<div v-for="item of navList" class="aside-nav__main_item" @click="toDrawcard">
 								<img src="../../assets/icon-home-active..png" alt="">
 								<p>
 									{{ item.name }}
@@ -73,7 +75,7 @@ const navList = ref([
 		icon: ''
 	}, 
 	{
-		name: '消息',
+		name: '抽卡',
 		icon: ''
 	}, 
 ])
@@ -99,6 +101,12 @@ function toLogin() {
   router.push({
     path: '/login'
   })
+}
+
+function toDrawcard() {
+	router.push({
+		path: '/drawcard'
+	})
 }
 </script>
 

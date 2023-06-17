@@ -8,10 +8,14 @@
 <style lang="scss">
 body {
     margin: 0;
-    box-sizing: border-box
+    box-sizing: border-box;
+    overflow: hidden;
 }
 * {
   margin: 0;
   box-sizing: border-box
+}
+#app {
+  overflow: hidden;
 }
 </style>

@@ -1,6 +1,3 @@
 declare namespace API {
-  // 获取文件列表参数
-  type DrawcardParams = {
-    analysisUrl: string
-  };
+  type GachaType = '1' | '2' | '11' | '12'
 }

@@ -11,7 +11,7 @@ export function drawcardAnalysisApi(data: any) {
   })
 }
 
-// 获取抽卡列表
+// 获取抽卡分析图表数据
 export function getDrawcardChartsApi(data: any) {
   return myAxios({
     url: '/drawcard/charts',

@@ -47,4 +47,20 @@ export default defineConfig({
       },
     },
   },
+  server: {
+    port: 9527,
+    proxy: {
+      // "/api": {
+      //   target: "http://www.hxqiao.top:3000",
+      //   changeOrigin: true, //是否跨域
+      //   // rewrite: (path) => path.replace(/^\/mis/, ""), //因为后端接口有mis前缀，所以不需要替换
+      //   // ws: true,                       //是否代理 websockets
+      //   // secure: true, //是否https接口
+      // },
+      // "/":  {
+      //   target: "http://127.0.0.1:8080",
+      //   changeOrigin: true, //是否跨域
+      // }
+    },
+  },
 })

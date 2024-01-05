@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path')
 const uploader = require('express-fileupload');
 require('dotenv').config()
-const auth = require('../middleware/auth')
+// const auth = require('../middleware/auth')
 const { video } = require('../utils/media');
 const { extname, resolve } = path;
 const { promises: { writeFile, appendFile, }, existsSync } = fs;
@@ -11,7 +11,7 @@ module.exports = function (app) {
 
   app.use(uploader());
   // 获取文件列表
-  app.get('/file/list', auth, async function (req, res) {
+  app.get('/file/list', async function (req, res) {
     const { user } = req;
     let components = []
     const files = fs.readdirSync(`./uploads${req.query.dir}`)
@@ -29,7 +29,7 @@ module.exports = function (app) {
   })
 
   // 删除文件
-  app.post('/file/delect', auth, (req, res) => {
+  app.post('/file/delect', (req, res) => {
     const { dir, name } = req.body
     const path = './uploads' + dir + name
     if (fs.existsSync(path)) {
@@ -47,7 +47,7 @@ module.exports = function (app) {
   })
 
   // 重命名文件
-  app.post('/file/rename', auth, (req, res) => {
+  app.post('/file/rename', (req, res) => {
     const { dir, name } = req.body
     const path = './uploads' + dir + name
     fs.rename(path, newPath, (err) => {
@@ -60,7 +60,7 @@ module.exports = function (app) {
   })
 
   // 上传文件
-  app.post('/file/upload', auth, async (req, res) => {
+  app.post('/file/upload', async (req, res) => {
     const { name, size, type, offset, hash, dir } = req.body;
     const { file } = req.files;
 

@@ -15,14 +15,9 @@
 import { onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 
-
 interface Tree {
   label: string
   children?: Tree[]
-}
-
-const handleNodeClick = (data: Tree) => {
-  console.log(data)
 }
 
 const data: Tree[] = [
@@ -59,6 +54,12 @@ let currentCategory: filesCategory = 'all'
 
 const router = useRouter()
 const route = useRoute()
+const handleNodeClick = (data: Tree) => {
+  router.push({
+    path: '/music'
+  })
+}
+
 onMounted(() => {
   if (route.query.path) {
     router.push({

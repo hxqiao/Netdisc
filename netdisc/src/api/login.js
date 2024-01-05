@@ -12,7 +12,7 @@ export function logout(params) {
 
 export function loginApi(data) {
   return myAxios({
-    url: '/login',
+    url: '/nologin',
     method: 'post',
     data
   }, {

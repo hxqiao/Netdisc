@@ -29,3 +29,13 @@ export function getMusicPlayListApi(params) {
     loading: false
   })
 }
+
+export function getsongApi(params) {
+  return myAxios({
+    url: '/api/onesong/play',
+    method: 'get',
+    params
+  }, {
+    loading: false
+  })
+}

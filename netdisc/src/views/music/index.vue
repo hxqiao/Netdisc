@@ -24,18 +24,20 @@
                 </template>
             </el-table-column>
         </el-table>
-        <div id="audio_context" v-loading="audioLoading"></div>
+        <div id="audio_context" v-loading="audioLoading">
+            <!-- <el-button @click="getsong">getsong</el-button> -->
+        </div>
     </div>
 </template>
 
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
-import { getMusicListApi, getMusicListDetailApi, getMusicPlayListApi } from "@/api/music.js";
+import { getMusicListApi, getMusicListDetailApi, getMusicPlayListApi, getsongApi } from "@/api/music.js";
 const tableData = ref([]);
 const getMusicList = async () => {
     const { privileges } = await getMusicListApi({
-        id: 454241668,
-        timestamp: 1704350979167,
+        id: 3136952023,
+        // timestamp: 1704350979167,
         // realIP: '211.161.244.70'
     });
 
@@ -60,10 +62,17 @@ const play = async ({ row, $index }) => {
     playIndex.value = $index;
     audioLoading.value = true;
     const { audios: {'' : resList} } = await getMusicPlayListApi({
-        q: `${row.name}`
+        q: `${row.ar[0]?.name + '-' + row.name}`
     })
     console.log(resList[0]?.url);
     mp3.value = resList[0]?.url;
+    if (!mp3.value) {
+        play({
+            row: tableData.value[playIndex.value + 1],
+            $index: playIndex.value + 1,
+        });
+        return;
+    }
 
     // 创建一个新的 Audio 对象
     audio.value.src = mp3.value;
@@ -90,6 +99,11 @@ const play = async ({ row, $index }) => {
         console.log('音频开始播放！');
         audioLoading.value = false;
     });
+    audio.value.addEventListener('error', () => {
+        console.log('音频播放错误！');
+        audio.value.src = resList[1]?.url;
+        audio.value.play();
+    });
     audio.value.addEventListener('ended', function() {
         console.log('音频结束播放！');
         play({
@@ -97,6 +111,10 @@ const play = async ({ row, $index }) => {
             $index: playIndex.value + 1,
         });
     });
+}
+const getsong = () => {
+    const url = 'http://127.0.0.1:8080/api/onesong/play';
+
 }
 onMounted(() => {
     audio.value = new Audio();

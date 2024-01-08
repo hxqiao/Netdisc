@@ -37,7 +37,7 @@ module.exports = function (app) {
 
   app.get('/api/onesong/play', function (req, res) {
     console.log('/api/onesong/play');
-    https.get('https://fmq.qqping.cn/res/2024/01/04/497451239.mp3', (response) => {
+    https.get('https://music.163.com/song/media/outer/url?id=1478005597', (response) => {
       response.pipe(res);
     });
   });

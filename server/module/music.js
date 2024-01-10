@@ -57,7 +57,8 @@ module.exports = function (app) {
         'Content-Type': contentType,
         'Content-Length': contentLength
       });
-    
+      console.log(contentType);
+      console.log(contentLength);
       // 将音频流直接传递给客户端
       response.data.pipe(res);
     } catch (error) {

@@ -40,8 +40,10 @@ module.exports = function (app) {
 
   app.get('/api/onesong/play', async (req, res) => {
     console.log('/api/onesong/play');
+    // const searchId = req.query.id;
+    // await axios.get('', )
     try {
-      const audioUrl = 'http://m7.music.126.net/20240109162416/c499a47b86236e67fe2b2ea557c459a9/ymusic/4baa/0465/b2f2/8007e8d1f1d6aad4105d9841b52e065b.mp3'
+      const audioUrl = 'https://music.163.com/song/media/outer/url?id=2112003150'
       // 使用Axios获取音频链接的响应
       const response = await axios.get(audioUrl, {
         // 设置响应类型为stream，这样可以直接返回一个可读流

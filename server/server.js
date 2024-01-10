@@ -6,6 +6,7 @@ const url=require("url");
 const app = express();
 const batchFileApi = require('./module/files.js');
 const musicApi = require('./module/music.js');
+const testApi = require('./test.js');
 // const userLoginProcessing = require('./module/login.js');
 
 app.use(bodyParser.json());
@@ -14,9 +15,10 @@ app.use(cors());
 
 // 文件系统模块
 // batchFileApi(app)
+testApi(app);
 
 // 音乐相关
-musicApi(app)
+musicApi(app);
 
 // 登录模块
 app.post('/nologin', function(req, res) {

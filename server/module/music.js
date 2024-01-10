@@ -1,5 +1,8 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
-const https = require('https');
+// const https = require('https');
+//引入request模块
+const { default: axios } = require('axios')
+
 const middleLog = (req, res, next) => {
   console.log(req.url);
   next();
@@ -35,10 +38,25 @@ module.exports = function (app) {
     }
   }))
 
-  app.get('/api/onesong/play', function (req, res) {
+  app.get('/api/onesong/play', async (req, res) => {
     console.log('/api/onesong/play');
-    https.get('https://music.163.com/song/media/outer/url?id=1478005597', (response) => {
-      response.pipe(res);
+   
+    const audioUrl = 'http://m7.music.126.net/20240109162416/c499a47b86236e67fe2b2ea557c459a9/ymusic/4baa/0465/b2f2/8007e8d1f1d6aad4105d9841b52e065b.mp3'
+    // 使用Axios获取音频链接的响应
+    const response = await axios.get(audioUrl, {
+      // 设置响应类型为stream，这样可以直接返回一个可读流
+      responseType: 'stream'
     });
+    // 获取音频的内容类型和大小
+    const contentType = response.headers['content-type'];
+    const contentLength = response.headers['content-length'];
+    // 设置响应头，告诉客户端音频的类型和大小
+    res.set({
+      'Content-Type': contentType,
+      'Content-Length': contentLength
+    });
+  
+    // 将音频流直接传递给客户端
+    response.data.pipe(res);
   });
 }

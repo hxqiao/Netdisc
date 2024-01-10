@@ -41,7 +41,7 @@ module.exports = function (app) {
   app.get('/api/onesong/play', async (req, res) => {
     console.log('/api/onesong/play');
     try {
-      const audioUrl = 'http://m7.music.126.net/20240109162416/c499a47b86236e67fe2b2ea557c459a9/ymusic/4baa/0465/b2f2/8007e8d1f1d6aad4105d9841b52e065b.mp3'
+      const audioUrl = 'https://cs3-16v4.vkuseraudio.net/s/v1/acmp/7JnD9fJge6MSOkOW8csyvrkkbJOvuwQ_iNIjVImX6Du3mdKrWrJWOec8dLP_tGrxsUE41WWMLK0P53agWBolvtYJ2Agu4VpA6yGZ9xLAhLX5l-cXyhUAVJnP5npnRcLqm_5yi2zf1ljieN_nMDeJqrAUuojqkYo1YZbjqZWXxr44JCOYYQ.mp3'
       // 使用Axios获取音频链接的响应
       const response = await axios.get(audioUrl, {
         // 设置响应类型为stream，这样可以直接返回一个可读流

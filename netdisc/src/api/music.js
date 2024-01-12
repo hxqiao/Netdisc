@@ -32,11 +32,11 @@ export function getMusicPlayListApi(params) {
 
 export async function getSongUrlApi(params) {
   const res = await myAxios({
-    url: '/eapi/song/url',
+    url: '/api/song/url',
     method: 'get',
     params
   }, {
     loading: false
   })
-  return '/eapi/onesong/play?url=' + res.data[0].url
+  return res.data[0].url
 }

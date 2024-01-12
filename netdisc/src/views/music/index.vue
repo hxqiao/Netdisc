@@ -61,14 +61,10 @@ const playIndex = ref(0);
 const play = async ({ row, $index }) => {
     playIndex.value = $index;
     audioLoading.value = true;
-    // const { audios: {'' : resList} } = await getMusicPlayListApi({
-    //     q: `${row.ar[0]?.name + '-' + row.name}`
-    // })
-    // console.log(resList[0]?.url);
-    // mp3.value = resList[0]?.url;
     mp3.value = await getSongUrlApi({
         id: row.id,
         realIP: '211.161.244.70',
+        br: 320000
     })
     if (!mp3.value) {
         play({
@@ -79,32 +75,37 @@ const play = async ({ row, $index }) => {
     }
 
     // 创建一个新的 Audio 对象
-    audio.value.src = mp3.value;
+    const audioEl = document.getElementsByTagName('audio')[0];
+    if (audioEl && audioEl.parentNode) {
+        audioEl.parentNode.removeChild(audioEl);
+    }
+    audioContext.value = null;
+    audioContext.value = new AudioContext();
+    audio.value = null;
+    audio.value = new Audio();
+    console.log(audio.value);
     
-    if (document.getElementsByTagName('audio')[0]) {
-        audio.value.play();
-        return;
-    }
-    audio.value.crossOrigin = "anonymous";
     audio.value.controls = true;
-    if (!audioContext.value) {
-        audioContext.value = new AudioContext();
-    }
-        
-    // 创建一个新的 MediaElementAudioSourceNode 对象
-    const source = audioContext.value.createMediaElementSource(audio.value);
-    source.disconnect();
-    // 将源连接到 AudioContext 的 destination
-    source.connect(audioContext.value.destination);
+    audio.value.crossOrigin = "anonymous";
+    audio.value.src = mp3.value;
     document.getElementById('audio_context').appendChild(audio.value)  //把它添加到页面中
+    setTimeout(() => {
+        const source = audioContext.value.createMediaElementSource(audio.value);
+        source.disconnect();
+        
+        // 创建一个新的 MediaElementAudioSourceNode 对象
+        // 将源连接到 AudioContext 的 destination
+        source.connect(audioContext.value.destination);
+        audio.value.play();
+    }, 1000);
     // 播放音频
-    audio.value.play();
     audio.value.addEventListener('play', function() {
         console.log('音频开始播放！');
         audioLoading.value = false;
     });
     audio.value.addEventListener('error', () => {
         console.log('音频播放错误！');
+        return;
         play({
             row: tableData.value[playIndex.value + 1],
             $index: playIndex.value + 1,
@@ -112,21 +113,14 @@ const play = async ({ row, $index }) => {
     });
     audio.value.addEventListener('ended', function() {
         console.log('音频结束播放！');
+        return;
         play({
             row: tableData.value[playIndex.value + 1],
             $index: playIndex.value + 1,
         });
     });
 }
-const getsong = () => {
-    const data = {
-      id: '1948478077',
-      level: 'standard',
-    }
-    getSongUrlApi(data)
-}
 onMounted(() => {
-    audio.value = new Audio();
     getMusicList();
 });
 </script>

@@ -30,12 +30,13 @@ export function getMusicPlayListApi(params) {
   })
 }
 
-export function getsongApi(params) {
-  return myAxios({
-    url: '/api/onesong/play',
+export async function getSongUrlApi(params) {
+  const res = await myAxios({
+    url: '/eapi/song/url',
     method: 'get',
     params
   }, {
     loading: false
   })
+  return '/eapi/onesong/play?url=' + res.data[0].url
 }

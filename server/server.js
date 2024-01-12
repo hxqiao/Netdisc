@@ -34,8 +34,6 @@ app.post('/nologin', function(req, res) {
 
 // 图片
 app.all('*', function(req, res, next) {
-  console.log('>>>>>>>>');
-  console.log(req.url);
   var pathname = url.parse(req.url).pathname; //当url的ip加端口号的后1到7位为img/png时，返回以该路径下对应的png图片 
   switch (pathname.substring(pathname.length - 3)) {
     case 'jpg':

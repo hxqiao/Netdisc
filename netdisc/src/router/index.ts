@@ -3,7 +3,7 @@ import { createRouterGuards } from './guards';
 import type { App } from 'vue';
 
 const routes = [
-	{ path: "/", redirect: "/login" },
+	{ path: "/", redirect: "/music" },
 	{
 		path: "/home",
 		name: "home",

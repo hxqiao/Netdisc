@@ -21,7 +21,7 @@ export default function myAxios(axiosConfig, customOptions, loadingOptions, axio
   // console.log(`vueDouyinApi：${axiosConfig.url}`);
   const service = axios.create(Object.assign({
     // baseURL: import.meta.env.VITE_URL,
-    baseURL: 'http://127.0.0.1:8080',
+    baseURL: '',
     timeout: 10000
   }, axiosServiceConfig))
 

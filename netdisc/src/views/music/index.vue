@@ -32,11 +32,11 @@
 
 <script lang="ts" setup>
 import { onMounted, ref } from "vue";
-import { getMusicListApi, getMusicListDetailApi, getMusicPlayListApi, getsongApi } from "@/api/music.js";
+import { getMusicListApi, getMusicListDetailApi, getMusicPlayListApi, getSongUrlApi } from "@/api/music.js";
 const tableData = ref([]);
 const getMusicList = async () => {
     const { privileges } = await getMusicListApi({
-        id: 3136952023,
+        id: 8970435394,
         // timestamp: 1704350979167,
         // realIP: '211.161.244.70'
     });
@@ -61,11 +61,15 @@ const playIndex = ref(0);
 const play = async ({ row, $index }) => {
     playIndex.value = $index;
     audioLoading.value = true;
-    const { audios: {'' : resList} } = await getMusicPlayListApi({
-        q: `${row.ar[0]?.name + '-' + row.name}`
+    // const { audios: {'' : resList} } = await getMusicPlayListApi({
+    //     q: `${row.ar[0]?.name + '-' + row.name}`
+    // })
+    // console.log(resList[0]?.url);
+    // mp3.value = resList[0]?.url;
+    mp3.value = await getSongUrlApi({
+        id: row.id,
+        realIP: '211.161.244.70',
     })
-    console.log(resList[0]?.url);
-    mp3.value = resList[0]?.url;
     if (!mp3.value) {
         play({
             row: tableData.value[playIndex.value + 1],
@@ -101,8 +105,10 @@ const play = async ({ row, $index }) => {
     });
     audio.value.addEventListener('error', () => {
         console.log('音频播放错误！');
-        audio.value.src = resList[1]?.url;
-        audio.value.play();
+        play({
+            row: tableData.value[playIndex.value + 1],
+            $index: playIndex.value + 1,
+        });
     });
     audio.value.addEventListener('ended', function() {
         console.log('音频结束播放！');
@@ -113,8 +119,11 @@ const play = async ({ row, $index }) => {
     });
 }
 const getsong = () => {
-    const url = 'http://127.0.0.1:8080/api/onesong/play';
-
+    const data = {
+      id: '1948478077',
+      level: 'standard',
+    }
+    getSongUrlApi(data)
 }
 onMounted(() => {
     audio.value = new Audio();

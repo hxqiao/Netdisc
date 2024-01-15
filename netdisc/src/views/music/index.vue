@@ -1,44 +1,71 @@
 <template>
     <div class="music">
-        <el-table :data="tableData" style="width: 100%">
-            <el-table-column prop="id" label="id" width="120" />
-            <el-table-column prop="name" label="名称" min-width="180" />
-            <el-table-column prop="ar" label="作者" min-width="180">
-                <template #default="scoped">
-                    {{ scoped.row.ar.map((e) => e.name).join('，') }}
-                </template>
-            </el-table-column>
-            <el-table-column prop="al" label="专辑" min-width="180">
-                <template #default="scoped">
-                    {{ scoped.row.al.name }}
-                </template>
-            </el-table-column>
-            <el-table-column prop="name" label="时长" min-width="80">
-                <template #default="scoped">
-                    {{ getTime(scoped.row.dt) }}
-                </template>
-            </el-table-column>
-            <el-table-column prop="name" label="时长" min-width="80">
-                <template #default="scoped">
-                    <el-button @click="play(scoped)"></el-button>
-                </template>
-            </el-table-column>
-        </el-table>
+        <SearchMusic @getTableDataCb="getTableDataCb"></SearchMusic>
+        <div class="table_list">
+            <el-table v-if="tableType === 'music'" :data="tableData" height="100%" style="width: 100%">
+                <el-table-column prop="id" label="id" width="120" />
+                <el-table-column prop="name" label="名称" min-width="180" />
+                <el-table-column prop="ar" label="作者" min-width="180">
+                    <template #default="scoped">
+                        {{ scoped.row.ar.map((e) => e.name).join('，') }}
+                    </template>
+                </el-table-column>
+                <el-table-column prop="al" label="专辑" min-width="180">
+                    <template #default="scoped">
+                        {{ scoped.row.al.name }}
+                    </template>
+                </el-table-column>
+                <el-table-column prop="name" label="时长" min-width="80">
+                    <template #default="scoped">
+                        {{ getTime(scoped.row.dt) }}
+                    </template>
+                </el-table-column>
+                <el-table-column prop="name" label="时长" min-width="80">
+                    <template #default="scoped">
+                        <el-button @click="playMusic(scoped)"></el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+            <el-table v-else :data="tableData" height="100%" style="width: 100%">
+                <el-table-column prop="id" label="id" width="120" />
+                <el-table-column prop="name" label="名称" min-width="180" />
+                <el-table-column prop="name" label="时长" min-width="80">
+                    <template #default="scoped">
+                        <el-button @click="playMusicList(scoped.row)">播放</el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
         <div id="audio_context" v-loading="audioLoading">
-            <!-- <el-button @click="getsong">getsong</el-button> -->
+            <audio
+                v-show="isplay" 
+                ref='audio' 
+                @error="playError"
+                @play='playing' 
+                @ended='ended'
+                :src="musicUrl" 
+                controls 
+                autoplay 
+                class="myaudio"
+                ></audio>
         </div>
     </div>
 </template>
 
 <script lang="ts" setup>
+import SearchMusic from './SearchMusic.vue'
 import { onMounted, ref } from "vue";
-import { getMusicListApi, getMusicListDetailApi, getMusicPlayListApi, getSongUrlApi } from "@/api/music.js";
+import { getMusicListApi, getMusicListDetailApi, getLoveListApi, getSongUrlApi } from "@/api/music.js";
+const tableType = ref('musiclist');
 const tableData = ref([]);
-const getMusicList = async () => {
+function getTableDataCb(data:any) {
+    tableType.value = 'musiclist';
+    tableData.value = data;
+}
+const getMusicList = async (params:any) => {
     const { privileges } = await getMusicListApi({
-        id: 8970435394,
-        // timestamp: 1704350979167,
-        // realIP: '211.161.244.70'
+        id: params.id,
+        realIP: '211.161.244.70'
     });
 
     const seachList = privileges.map((e: { id: any; }) => e.id);
@@ -46,82 +73,54 @@ const getMusicList = async () => {
         ids: seachList.join(','),
     })
     tableData.value = songs;
+    tableType.value = 'music';
+}
+async function searchLove() {
+    const { playlist } = await getLoveListApi({
+        uid: 325892764,
+    })
+    tableData.value = playlist;
+}
+function playMusicList(params:any) {
+    console.log(params);
+    
+    getMusicList({
+        id: params.id
+    })
 }
 const getTime = (dt: number) => {
     const s = Number((dt / 1000).toFixed(0))
     return `${(s / 60).toFixed(0)}:${s % 60 < 10 ? '0' : ''}${s % 60}`
 };
-const audioRef = ref(null);
 const audioLoading = ref(false);
-const mp3 = ref('');
-const audio = ref(null);
-// 创建一个新的 AudioContext 对象
-const audioContext = ref(null);
 const playIndex = ref(0);
-const play = async ({ row, $index }) => {
+const isplay = ref(false);
+const musicUrl = ref('');
+const playMusic = async ({ row, $index }) => {
     playIndex.value = $index;
-    audioLoading.value = true;
-    mp3.value = await getSongUrlApi({
+    musicUrl.value = await getSongUrlApi({
         id: row.id,
         realIP: '211.161.244.70',
         br: 320000
     })
-    if (!mp3.value) {
-        play({
-            row: tableData.value[playIndex.value + 1],
-            $index: playIndex.value + 1,
-        });
-        return;
-    }
-
-    // 创建一个新的 Audio 对象
-    const audioEl = document.getElementsByTagName('audio')[0];
-    if (audioEl && audioEl.parentNode) {
-        audioEl.parentNode.removeChild(audioEl);
-    }
-    audioContext.value = null;
-    audioContext.value = new AudioContext();
-    audio.value = null;
-    audio.value = new Audio();
-    console.log(audio.value);
-    
-    audio.value.controls = true;
-    audio.value.crossOrigin = "anonymous";
-    audio.value.src = mp3.value;
-    document.getElementById('audio_context').appendChild(audio.value)  //把它添加到页面中
-    setTimeout(() => {
-        const source = audioContext.value.createMediaElementSource(audio.value);
-        source.disconnect();
-        
-        // 创建一个新的 MediaElementAudioSourceNode 对象
-        // 将源连接到 AudioContext 的 destination
-        source.connect(audioContext.value.destination);
-        audio.value.play();
-    }, 1000);
-    // 播放音频
-    audio.value.addEventListener('play', function() {
-        console.log('音频开始播放！');
-        audioLoading.value = false;
-    });
-    audio.value.addEventListener('error', () => {
-        console.log('音频播放错误！');
-        return;
-        play({
-            row: tableData.value[playIndex.value + 1],
-            $index: playIndex.value + 1,
-        });
-    });
-    audio.value.addEventListener('ended', function() {
-        console.log('音频结束播放！');
-        return;
-        play({
-            row: tableData.value[playIndex.value + 1],
-            $index: playIndex.value + 1,
-        });
+    console.log(musicUrl.value);
+}
+function playing(params:any) {
+    isplay.value = true;
+}
+function ended(params:any) {
+    isplay.value = false;
+    playIndex.value++;
+    playMusic({
+        row: tableData.value[playIndex.value],
+        $index: playIndex.value,
     });
 }
+function playError(params:any) {
+    console.log(params);
+}
 onMounted(() => {
-    getMusicList();
+    searchLove();
 });
 </script>
 
@@ -130,6 +129,11 @@ onMounted(() => {
     position: relative;
     width: 100%;
     height: 100%;
+    .table_list {
+        border-top: 1px solid #eee;
+        height: calc(100vh - 50px);
+        overflow: hidden;
+    }
     #audio_context {
         z-index: 11111111111;
         width: 300px;

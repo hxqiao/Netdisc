@@ -38,5 +38,16 @@ export async function getSongUrlApi(params) {
   }, {
     loading: false
   })
-  return res.data[0].url
+  // return res.data[0].url
+  return '/eapi/onesong/play?url=' + res.data[0].url
+}
+
+export function getLoveListApi(params) {
+  return myAxios({
+    url: '/api/user/playlist',
+    method: 'get',
+    params
+  }, {
+    loading: false
+  })
 }

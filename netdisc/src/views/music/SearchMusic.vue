@@ -12,7 +12,7 @@
 import { ref } from 'vue';
 import { getMusicListApi, getLoveListApi } from "@/api/music.js";
 
-const emit = defineEmits(['getTableDataCb'])
+const emit = defineEmits(['getTableDataCb', 'getMusicListCb'])
 const tableData = ref([]);
 async function searchLove(params:any) {
     const { playlist } = await getLoveListApi({
@@ -25,12 +25,13 @@ async function searchLove(params:any) {
 const musicListId = ref('');
 
 const getMusicList = async () => {
-    const { privileges } = await getMusicListApi({
+    const { playlist: { tracks } } = await getMusicListApi({
         id: musicListId.value,
         // timestamp: 1704350979167,
         // realIP: '211.161.244.70'
     });
-    console.log(privileges);
+    emit('getMusicListCb', tracks);
+    console.log(tracks);
     // const seachList = privileges.map((e: { id: any; }) => e.id);
     // const { songs } = await getMusicListDetailApi({
     //     ids: seachList.join(','),

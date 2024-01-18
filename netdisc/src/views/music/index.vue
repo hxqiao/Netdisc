@@ -1,6 +1,6 @@
 <template>
     <div class="music">
-        <SearchMusic @getTableDataCb="getTableDataCb"></SearchMusic>
+        <SearchMusic @getTableDataCb="getTableDataCb" @getMusicListCb="getMusicListCb"></SearchMusic>
         <div class="table_list">
             <el-table v-if="tableType === 'music'" :data="tableData" height="100%" style="width: 100%">
                 <el-table-column prop="id" label="id" width="120" />
@@ -60,6 +60,10 @@ const tableType = ref('musiclist');
 const tableData = ref([]);
 function getTableDataCb(data:any) {
     tableType.value = 'musiclist';
+    tableData.value = data;
+}
+function getMusicListCb(data:any) {
+    tableType.value = 'music';
     tableData.value = data;
 }
 const getMusicList = async (params:any) => {

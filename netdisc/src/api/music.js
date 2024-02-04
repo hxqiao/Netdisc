@@ -51,3 +51,13 @@ export function getLoveListApi(params) {
     loading: false
   })
 }
+
+export function getMyCloudApi(params) {
+  return myAxios({
+    url: '/api/user/cloud',
+    method: 'get',
+    params
+  }, {
+    loading: false
+  })
+}

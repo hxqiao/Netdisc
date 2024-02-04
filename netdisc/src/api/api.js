@@ -21,7 +21,7 @@ export default function myAxios(axiosConfig, customOptions, loadingOptions, axio
   // console.log(`vueDouyinApi：${axiosConfig.url}`);
   const service = axios.create(Object.assign({
     // baseURL: import.meta.env.VITE_URL,
-    baseURL: '',
+    baseURL: '/',
     timeout: 10000
   }, axiosServiceConfig))
 
@@ -36,9 +36,6 @@ export default function myAxios(axiosConfig, customOptions, loadingOptions, axio
   // 请求拦截器
   service.interceptors.request.use(
     config => {
-      if (!verifyToken(config)) { // 验证token
-        return config;
-      }
       removePending(config);
       custom_options.repeat_request_cancel && addPending(config);
       // 创建loading实例
@@ -77,8 +74,9 @@ export default function myAxios(axiosConfig, customOptions, loadingOptions, axio
       error.config && removePending(error.config);
       custom_options.loading && closeLoading(custom_options); // 关闭loading
       custom_options.error_message_show && httpErrorStatusHandle(error); // 处理错误状态码
+      console.log(error);
       const { data: { message }} = error.response
-      if (message) {
+      if (data && message) {
         ElMessage({
           type: 'error',
           message
@@ -168,24 +166,6 @@ function addPending(config){
       pendingMap.set(pendingKey, cancel);
     }
   });
-}
-
-/**
- * 验证token是否有效
- * @param {*}
- */
-function verifyToken(config) {
-  const token = Storage.get(ACCESS_TOKEN_KEY);
-  if (token && config.headers) {
-    // 请求头token信息，请根据实际情况进行修改
-    config.headers['Authorization'] = token;
-    return true
-  } else {
-    router.push({
-      path: './'
-    })
-    return false
-  }
 }
 
 /**

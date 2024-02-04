@@ -1,10 +1,25 @@
 <template>
-    <div class="SearchMusic">
+     <el-menu
+        :default-active="activeTab"
+        class="el-menu-demo"
+        mode="horizontal"
+        :ellipsis="false"
+        @select="handleSelect"
+    >
+        <el-menu-item>
+            <img
+                style="width: 60px;"
+                src="https://th.bing.com/th/id/OIP.TjFUTquZC7evY7CbupMa3QHaHa?rs=1&pid=ImgDetMain"
+                alt="hanxi music logo"
+            />
+        </el-menu-item>
+        <div style="flex-grow: 1;" />
+        <el-menu-item v-for="item in tabList" :index="item.value">
+            {{ item.name }}
+        </el-menu-item>
+    </el-menu>
+    <div v-if="activeTab === 'musicList'" class="SearchMusic">
         <el-button type="danger" @click="searchLove">我的歌单</el-button>
-
-        <el-button v-if="route.path!=='/cloud'" type="danger" @click="toMyCloud">前往我的云盘</el-button>
-
-        <el-button v-else type="danger" @click="searchMyCloud">我的云盘</el-button>
 
         <div class="search_id">
             <el-input v-model="musicListId" size="default" placeholder="请输入歌单id"></el-input>
@@ -14,11 +29,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { getMusicListApi, getLoveListApi } from "@/api/music.js";
 import { useRouter, useRoute } from 'vue-router';
 
+const router = useRouter();
+const route = useRoute();
+
 const emit = defineEmits(['getTableDataCb', 'getMusicListCb', 'getCloudInfoCb'])
+
+const tabList = [
+    {
+        name: '我的歌单',
+        value: 'musicList',
+        path: '/music'
+    },
+    {
+        name: '我的云盘',
+        value: 'cloud',
+        path: '/cloud'
+    },
+]
+const activeTab = ref('musicList');
+function handleSelect(value: string) {
+    router.push({
+        path: tabList.find(e => e.value === value).path
+    })
+}
+
 const tableData = ref([]);
 async function searchLove() {
     const { playlist } = await getLoveListApi({
@@ -26,18 +64,6 @@ async function searchLove() {
     })
     tableData.value = playlist;
     emit('getTableDataCb', playlist);
-}
-
-function toMyCloud() {
-    router.push({
-        path: '/cloud'
-    })
-}
-
-const router = useRouter();
-const route = useRoute();
-function searchMyCloud() {
-    emit('getCloudInfoCb');
 }
 
 const musicListId = ref('');
@@ -59,6 +85,10 @@ const getMusicList = async () => {
 function searchMusicList() {
     getMusicList();
 }
+onMounted(() => {
+    console.log(route.path);
+    activeTab.value = tabList.find(e => e.path === route.path).value;
+})
 </script>
 
 <style lang="scss" scoped>
